@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package video_ai;
+
+service VideoAIService {
+  // Stream allows the UI to show real-time progress (e.g., "Extracting frames... 20%")
+  rpc ProcessVideo (VideoRequest) returns (stream ProcessResponse);
+  rpc ChatQuery (ChatRequest) returns (stream ChatResponse);
+}
+
+message VideoRequest {
+  string file_path = 1;
+}
+
+message ProcessResponse {
+  string status = 1;      // e.g., "TRANScribing", "ANALYZING_GRAPHS"
+  float progress = 2;    // 0.0 to 1.0
+}
+
+message ChatRequest {
+  string query = 1;
+  string session_id = 2;
+}
+
+message ChatResponse {
+  string text = 1;
+  bool needs_clarification = 2; // For Human-in-the-loop requirement
+  repeated string options = 3;  // "Did you mean <this> or <that>?"
+}
