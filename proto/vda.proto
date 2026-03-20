@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package vda;
 
-// The core service for our Video Desktop Assistant
+// Core service for Video Desktop Assistant
 service VideoService {
-  // A simple heartbeat to check connection
+  // Heartbeat to check connection
   rpc Ping (Empty) returns (Pong);
   
   // Stream updates while processing a video
