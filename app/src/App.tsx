@@ -1,28 +1,52 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@tauri-apps/api/core"; // Tauri v2 standard
 import "./App.css";
 
 function App() {
-  const [status, setStatus] = useState("Waiting for backend...");
+  const [status, setStatus] = useState("Ready");
+  const [videoPath, setVideoPath] = useState("");
 
-  async function checkConnection() {
+  // Existing Ping function
+  async function pingBackend() {
     try {
-      // This calls the Rust function we just wrote!
-      const msg: string = await invoke("ping_backend");
-      setStatus(msg);
+      const response: string = await invoke("ping_backend");
+      setStatus(`Status: ${response}`);
     } catch (err) {
       setStatus(`Error: ${err}`);
     }
   }
 
+  // New File Picker function
+  async function handleSelectVideo() {
+    try {
+      setStatus("Opening file picker...");
+      const path: string = await invoke("select_video_file");
+      setVideoPath(path);
+      setStatus("Video Selected");
+    } catch (err) {
+      // This catches the "User cancelled" error from Rust
+      setStatus(`Picker: ${err}`);
+    }
+  }
+
   return (
-    <div className="container">
-      <h1>Intel VDA - Phase 1</h1>
-      <div className="card">
-        <button onClick={checkConnection}>Ping Backend</button>
-        <p>Status: <strong>{status}</strong></p>
+    <main className="container">
+      <h1>Intel VDA (Local AI)</h1>
+
+      <div className="row">
+        <button onClick={pingBackend}>Ping AI Engine</button>
+        <button onClick={handleSelectVideo}>Select Video File</button>
       </div>
-    </div>
+
+      <div className="status-box">
+        <p><strong>System Status:</strong> {status}</p>
+        {videoPath && (
+          <p className="path-text">
+            <strong>Selected File:</strong> {videoPath}
+          </p>
+        )}
+      </div>
+    </main>
   );
 }
 

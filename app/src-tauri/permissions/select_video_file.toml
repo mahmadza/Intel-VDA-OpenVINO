@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-select-video-file"
+description = "Allows the frontend to launch the native file picker"
+commands.allow = ["select_video_file"]

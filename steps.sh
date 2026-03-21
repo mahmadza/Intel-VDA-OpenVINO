@@ -82,3 +82,17 @@ pip install openvino>=2025.4.0 optimum-intel transformers accelerate
 # Install AI stack
 pip install moviepy opencv-python Pillow librosa torch torchvision torchaudio
 pip install num2words
+
+# For generation agent
+pip install python-pptx reportlab
+
+# Reinstall gRPC
+# Inside backend/ with vda_native active
+pip install grpcio grpcio-tools
+python -m grpc_tools.protoc -I../proto --python_out=. --grpc_python_out=. ../proto/vda.proto
+
+
+
+# Add plugin
+cd app/src-tauri
+cargo add tauri-plugin-dialog
