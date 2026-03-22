@@ -1,23 +1,14 @@
 syntax = "proto3";
-
 package vda;
 
-// Core service for Video Desktop Assistant
 service VideoService {
-  // Heartbeat to check connection
   rpc Ping (Empty) returns (Pong);
-  
-  // Stream updates while processing a video
-  rpc ProcessVideo (VideoRequest) returns (stream ProgressUpdate);
+  rpc ProcessVideo (VideoRequest) returns (stream ProgressUpdate); 
 }
 
+message VideoRequest { string file_path = 1; }
 message Empty {}
 message Pong { string message = 1; }
-
-message VideoRequest {
-  string file_path = 1;
-}
-
 message ProgressUpdate {
   string status = 1;
   float percentage = 2;

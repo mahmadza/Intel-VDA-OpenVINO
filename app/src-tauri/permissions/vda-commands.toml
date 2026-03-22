@@ -1,0 +1,7 @@
+[[permission]]
+identifier = "allow-vda-commands"
+description = "Allows the frontend to run the video analysis pipeline"
+commands.allow = [
+    "run_vda_pipeline",
+    "select_video_file"
+]

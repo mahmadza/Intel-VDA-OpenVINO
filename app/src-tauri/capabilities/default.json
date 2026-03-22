@@ -7,6 +7,8 @@
     "core:default",
     "dialog:default",
     "dialog:allow-open",
-    "allow-select-video-file"
+    "allow-select-video-file",
+    "core:event:default",
+    "allow-vda-commands"
   ]
 }

@@ -1,52 +1,52 @@
-import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core"; // Tauri v2 standard
-import "./App.css";
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
 function App() {
   const [status, setStatus] = useState("Ready");
+  const [progress, setProgress] = useState(0);
   const [videoPath, setVideoPath] = useState("");
 
-  // Existing Ping function
-  async function pingBackend() {
+  useEffect(() => {
+    // Setup listener for progress events
+    const unlisten = listen("pipeline-progress", (event: any) => {
+      setStatus(event.payload.status);
+      setProgress(event.payload.percentage);
+    });
+
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
+
+  const handleProcess = async () => {
     try {
-      const response: string = await invoke("ping_backend");
-      setStatus(`Status: ${response}`);
+      // 1. Get the file path first
+      const path = await invoke<string>("select_video_file");
+      setVideoPath(path);
+      
+      // 2. Start the AI pipeline
+      setStatus("Starting analysis...");
+      await invoke("run_vda_pipeline", { path });
+      
     } catch (err) {
       setStatus(`Error: ${err}`);
     }
-  }
-
-  // New File Picker function
-  async function handleSelectVideo() {
-    try {
-      setStatus("Opening file picker...");
-      const path: string = await invoke("select_video_file");
-      setVideoPath(path);
-      setStatus("Video Selected");
-    } catch (err) {
-      // This catches the "User cancelled" error from Rust
-      setStatus(`Picker: ${err}`);
-    }
-  }
+  };
 
   return (
-    <main className="container">
-      <h1>Intel VDA (Local AI)</h1>
-
-      <div className="row">
-        <button onClick={pingBackend}>Ping AI Engine</button>
-        <button onClick={handleSelectVideo}>Select Video File</button>
+    <div className="container">
+      <h1>Intel VDA</h1>
+      <button onClick={handleProcess}>Select & Process Video</button>
+      
+      <div className="status-area">
+        <p><strong>Status:</strong> {status}</p>
+        <div className="progress-bg">
+          <div className="progress-fill" style={{ width: `${progress}%` }}></div>
+        </div>
+        {videoPath && <small>File: {videoPath}</small>}
       </div>
-
-      <div className="status-box">
-        <p><strong>System Status:</strong> {status}</p>
-        {videoPath && (
-          <p className="path-text">
-            <strong>Selected File:</strong> {videoPath}
-          </p>
-        )}
-      </div>
-    </main>
+    </div>
   );
 }
 
