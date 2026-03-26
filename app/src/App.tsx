@@ -56,20 +56,15 @@ function App() {
 
   const handleProcess = async () => {
     try {
-      // 1. Get the path from the native picker
       const path = await invoke<string>("select_video_file");
       
-      // 2. Start the AI pipeline
       setStatus("Starting analysis...");
       setProgress(0); // Reset bar
       
       await invoke("run_vda_pipeline", { path });
-      
-      // 3. Finalize
       setStatus("Analysis Complete");
       const updatedHistory = await loadHistory();
       
-      // Auto-select the one we just finished (usually the first in ID DESC order)
       if (updatedHistory && updatedHistory.length > 0) {
         handleSelectVideo(updatedHistory[0].id);
       }
