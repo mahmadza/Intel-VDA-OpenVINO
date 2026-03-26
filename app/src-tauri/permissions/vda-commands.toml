@@ -1,7 +1,8 @@
 [[permission]]
 identifier = "allow-vda-commands"
-description = "Allows the frontend to run the video analysis pipeline"
+description = "Allows the frontend to use VDA commands"
 commands.allow = [
     "run_vda_pipeline",
-    "select_video_file"
+    "get_video_history",
+    "send_chat_message"
 ]

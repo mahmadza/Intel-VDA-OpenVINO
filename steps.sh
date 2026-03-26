@@ -96,3 +96,13 @@ python -m grpc_tools.protoc -I../proto --python_out=. --grpc_python_out=. ../pro
 # Add plugin
 cd app/src-tauri
 cargo add tauri-plugin-dialog
+cargo add rusqlite --features bundled
+
+
+# conda install -c conda-forge openvino
+python -m pip install openvino-genai
+
+
+# In backend/ directory
+mkdir -p models/phi3-mini-int4-ov
+huggingface-cli download "OpenVINO/Phi-3-mini-4k-instruct-int4-ov" --local-dir models/phi3-mini-int4-ov

@@ -1,13 +1,26 @@
-use tauri::Emitter; // For sending events to React
+use tauri::Emitter;
 use tauri_plugin_dialog::DialogExt;
-use crate::vda::video_service_client::VideoServiceClient;
-use crate::vda::VideoRequest;
+use rusqlite::{params, Connection};
+use std::sync::Mutex;
+use serde::Serialize;
 
-#[derive(serde::Serialize, Clone)]
+use crate::vda::video_service_client::VideoServiceClient;
+use crate::vda::{VideoRequest, ChatRequest, AnalysisResult};
+
+#[derive(Serialize, Clone)]
 pub struct ProgressPayload {
     pub status: String,
     pub percentage: f32,
 }
+
+#[derive(Serialize)]
+pub struct VideoHistory {
+    pub id: i64,
+    pub file_name: String,
+    pub created_at: String,
+}
+
+pub struct DbState(pub Mutex<Connection>);
 
 #[tauri::command]
 pub async fn select_video_file(app: tauri::AppHandle) -> Result<String, String> {
@@ -24,27 +37,128 @@ pub async fn select_video_file(app: tauri::AppHandle) -> Result<String, String> 
 }
 
 #[tauri::command]
-pub async fn run_vda_pipeline(window: tauri::Window, path: String) -> Result<String, String> {
-    // 1. Connect to Python
-    let mut client = VideoServiceClient::connect("http://127.0.0.1:50051")
-        .await
-        .map_err(|e| format!("Connection failed: {}", e))?;
+pub async fn run_vda_pipeline(
+    window: tauri::Window, 
+    db_state: tauri::State<'_, DbState>, 
+    path: String
+) -> Result<String, String> {
+    // Explicitly typed client to satisfy E0282
+    let mut client: VideoServiceClient<tonic::transport::Channel> = 
+        VideoServiceClient::connect("http://127.0.0.1:50051")
+            .await
+            .map_err(|e| format!("Connection error: {}", e))?;
 
-    let request = tonic::Request::new(VideoRequest { file_path: path });
+    // Explicitly typed stream to satisfy E0282
+    let mut stream: tonic::Streaming<crate::vda::ProgressUpdate> = 
+        client.process_video(VideoRequest { file_path: path.clone() })
+            .await
+            .map_err(|e| format!("gRPC error: {}", e))?
+            .into_inner();
 
-    // 2. Call the streaming RPC
-    let mut stream = client.process_video(request)
-        .await
-        .map_err(|e: tonic::Status| format!("gRPC Error: {}", e))?
-        .into_inner();
-
-    // 3. Listen to Python and Emit to React
-    while let Some(update) = stream.message().await.map_err(|e: tonic::Status| e.to_string())? {
+    while let Some(update) = stream.message().await.map_err(|e| e.to_string())? {
         window.emit("pipeline-progress", ProgressPayload {
-            status: update.status,
+            status: update.status.clone(),
             percentage: update.percentage,
         }).map_err(|e| e.to_string())?;
+
+        if let Some(data) = update.final_data {
+            save_to_db(&db_state, &path, data)?;
+        }
     }
 
     Ok("Analysis Complete".into())
+}
+
+#[tauri::command]
+pub async fn send_chat_message(
+    video_id: i64,
+    message: String,
+) -> Result<String, String> {
+    // Explicitly typed client
+    let mut client: VideoServiceClient<tonic::transport::Channel> = 
+        VideoServiceClient::connect("http://127.0.0.1:50051")
+            .await
+            .map_err(|e| format!("Connection error: {}", e))?;
+
+    let response = client.chat(ChatRequest {
+        video_id,
+        message,
+    }).await.map_err(|e| format!("Chat error: {}", e))?;
+
+    Ok(response.into_inner().reply)
+}
+
+#[tauri::command]
+pub async fn get_video_history(db_state: tauri::State<'_, DbState>) -> Result<Vec<VideoHistory>, String> {
+    let conn = db_state.0.lock().unwrap();
+    
+    let mut stmt = conn
+        .prepare("SELECT id, file_name, created_at FROM videos ORDER BY id DESC")
+        .map_err(|e| e.to_string())?;
+
+    let history_iter = stmt.query_map([], |row| {
+        Ok(VideoHistory {
+            id: row.get(0)?,
+            file_name: row.get(1)?,
+            created_at: row.get::<_, String>(2).unwrap_or_else(|_| "Unknown".into()),
+        })
+    }).map_err(|e| e.to_string())?;
+
+    let history: Vec<VideoHistory> = history_iter
+        .filter_map(|res| res.ok())
+        .collect();
+
+    // LOOK AT YOUR TERMINAL FOR THIS PRINT:
+    println!("DEBUG: Rust found {} rows in the database", history.len());
+
+    Ok(history)
+}
+
+fn save_to_db(db_state: &DbState, path: &str, data: AnalysisResult) -> Result<(), String> {
+    let conn = db_state.0.lock().unwrap();
+    
+    let file_name = std::path::Path::new(path)
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or("unknown_video");
+
+    // 1. Correctly handle the Video ID (Get existing or Create new)
+    // We use a query to check if it exists first
+    let video_id: i64 = match conn.query_row(
+        "SELECT id FROM videos WHERE file_path = ?1",
+        params![path],
+        |row| row.get(0),
+    ) {
+        Ok(id) => id, // Found existing
+        Err(_) => {
+            // Not found, insert new
+            conn.execute(
+                "INSERT INTO videos (file_path, file_name) VALUES (?1, ?2)",
+                params![path, file_name],
+            ).map_err(|e| e.to_string())?;
+            conn.last_insert_rowid()
+        }
+    };
+
+    // 2. Clean up old results for this video (so we don't have duplicates)
+    conn.execute("DELETE FROM analysis_results WHERE video_id = ?1", params![video_id])
+        .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM video_segments WHERE video_id = ?1", params![video_id])
+        .map_err(|e| e.to_string())?;
+
+    // 3. Insert fresh Analysis Result
+    conn.execute(
+        "INSERT INTO analysis_results (video_id, transcription_text, summary, status) VALUES (?1, ?2, ?3, ?4)",
+        params![video_id, data.transcription, data.summary, "completed"],
+    ).map_err(|e| e.to_string())?;
+
+    // 4. Insert fresh Segments
+    for seg in data.segments {
+        conn.execute(
+            "INSERT INTO video_segments (video_id, start_time, end_time, segment_type, content) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![video_id, seg.start_time, seg.end_time, seg.segment_type, seg.content],
+        ).map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
 }

@@ -5,7 +5,7 @@ import warnings
 
 import vda_pb2 as vda__pb2
 
-GRPC_GENERATED_VERSION = '1.70.0'
+GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in vda_pb2_grpc.py depends on'
+        + ' but the generated code in vda_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -26,8 +26,7 @@ if _version_not_supported:
 
 
 class VideoServiceStub(object):
-    """The core service for our Video Desktop Assistant
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -45,22 +44,30 @@ class VideoServiceStub(object):
                 request_serializer=vda__pb2.VideoRequest.SerializeToString,
                 response_deserializer=vda__pb2.ProgressUpdate.FromString,
                 _registered_method=True)
+        self.Chat = channel.unary_unary(
+                '/vda.VideoService/Chat',
+                request_serializer=vda__pb2.ChatRequest.SerializeToString,
+                response_deserializer=vda__pb2.ChatResponse.FromString,
+                _registered_method=True)
 
 
 class VideoServiceServicer(object):
-    """The core service for our Video Desktop Assistant
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def Ping(self, request, context):
-        """A simple heartbeat to check connection
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ProcessVideo(self, request, context):
-        """Stream updates while processing a video
-        """
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Chat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -78,6 +85,11 @@ def add_VideoServiceServicer_to_server(servicer, server):
                     request_deserializer=vda__pb2.VideoRequest.FromString,
                     response_serializer=vda__pb2.ProgressUpdate.SerializeToString,
             ),
+            'Chat': grpc.unary_unary_rpc_method_handler(
+                    servicer.Chat,
+                    request_deserializer=vda__pb2.ChatRequest.FromString,
+                    response_serializer=vda__pb2.ChatResponse.SerializeToString,
+            ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
             'vda.VideoService', rpc_method_handlers)
@@ -87,8 +99,7 @@ def add_VideoServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class VideoService(object):
-    """The core service for our Video Desktop Assistant
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def Ping(request,
@@ -134,6 +145,33 @@ class VideoService(object):
             '/vda.VideoService/ProcessVideo',
             vda__pb2.VideoRequest.SerializeToString,
             vda__pb2.ProgressUpdate.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def Chat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/vda.VideoService/Chat',
+            vda__pb2.ChatRequest.SerializeToString,
+            vda__pb2.ChatResponse.FromString,
             options,
             channel_credentials,
             insecure,

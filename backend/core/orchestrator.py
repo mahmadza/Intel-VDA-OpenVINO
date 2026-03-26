@@ -3,20 +3,25 @@ from utils.video_processor import VideoProcessor
 from agents.transcription_agent import TranscriptionAgent
 from agents.vision_agent import VisionAgent
 from agents.generation_agent import GenerationAgent
+from agents.query_agent import QueryAgent
 
 class VideoOrchestrator:
-    def __init__(self):
+    def __init__(self, db_path=None):
         print("--- 🧠 Initializing AI Orchestrator ---")
         self.processor = VideoProcessor()
         self.transcriber = TranscriptionAgent(model_id="openai/whisper-tiny")
         self.vision = VisionAgent()
         self.generator = GenerationAgent()
         
-        # Store state for the current session
+        self.query_agent = QueryAgent(db_path=db_path)
         self.current_transcript = ""
         self.current_descriptions = []
         self.video_metadata = {}
 
+    def handle_chat(self, video_id, message):
+        """Bridge to the Query Agent"""
+        return self.query_agent.chat(video_id, message)
+    
     def process_new_video(self, video_path):
         """
         Runs the full pipeline and yields status updates for gRPC

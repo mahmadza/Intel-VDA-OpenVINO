@@ -1,14 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
-  "identifier": "main-capability",
-  "description": "Capability for the main desktop window",
+  "identifier": "default",
+  "description": "Default permissions for the desktop app",
   "windows": ["main"],
   "permissions": [
-    "core:default",
-    "dialog:default",
-    "dialog:allow-open",
-    "allow-select-video-file",
-    "core:event:default",
-    "allow-vda-commands"
+  "core:default",
+  "dialog:default",
+  "core:event:default",
+  "core:window:default",
+  "core:path:default",
+  "allow-select-video-file",
+  "allow-vda-commands"
   ]
 }

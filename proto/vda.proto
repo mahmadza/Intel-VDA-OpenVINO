@@ -1,15 +1,47 @@
 syntax = "proto3";
+
 package vda;
 
 service VideoService {
   rpc Ping (Empty) returns (Pong);
   rpc ProcessVideo (VideoRequest) returns (stream ProgressUpdate); 
+  rpc Chat (ChatRequest) returns (ChatResponse);
 }
 
-message VideoRequest { string file_path = 1; }
+message VideoRequest { 
+  string file_path = 1; 
+}
+
 message Empty {}
-message Pong { string message = 1; }
+
+message Pong { 
+  string message = 1; 
+}
+
+message VideoSegment {
+  float start_time = 1;
+  float end_time = 2;
+  string content = 3;
+  string segment_type = 4; 
+}
+
+message AnalysisResult {
+  string transcription = 1;
+  string summary = 2;
+  repeated VideoSegment segments = 3;
+}
+
 message ProgressUpdate {
   string status = 1;
   float percentage = 2;
+  optional AnalysisResult final_data = 3; 
+}
+
+message ChatRequest {
+  string message = 1;
+  int64 video_id = 2;
+}
+
+message ChatResponse {
+  string reply = 1;
 }
