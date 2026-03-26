@@ -102,14 +102,6 @@ function App() {
         <h3>History ({history.length})</h3>
         <button onClick={handleProcess}>+ New Video</button>
         
-        {/* Add this temporary button */}
-        <button onClick={() => {
-          console.log("Manual refresh clicked");
-          loadHistory();
-        }} style={{ marginTop: '5px', backgroundColor: '#eee' }}>
-          🔄 Refresh History
-        </button>
-
         <div className="history-list">
           {history.map((v) => (
             <div key={v.id} className="history-item" onClick={() => handleSelectVideo(v.id)}>
