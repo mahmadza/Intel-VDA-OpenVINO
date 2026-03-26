@@ -11,7 +11,7 @@ function App() {
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  
+  const [isChatting, setIsChatting] = useState(false);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,11 +75,13 @@ function App() {
 };
 
   const handleSendMessage = async () => {
-    if (!chatInput || !activeVideoId) return;
+    if (!chatInput || !activeVideoId || isChatting) return;
     const userMsg = { role: "user", content: chatInput };
     setMessages(prev => [...prev, userMsg]);
     setChatInput("");
 
+    setIsChatting(true);
+    
     try {
       const aiReply = await invoke<string>("send_chat_message", { 
         videoId: activeVideoId, 
@@ -88,6 +90,8 @@ function App() {
       setMessages(prev => [...prev, { role: "assistant", content: aiReply }]);
     } catch (err) {
       setMessages(prev => [...prev, { role: "assistant", content: `Error: ${err}` }]);
+    } finally {
+      setIsChatting(false);
     }
   };
 
@@ -116,15 +120,26 @@ function App() {
                     <strong>{m.role === 'user' ? 'User' : 'VDA Agent'}:</strong> {m.content}
                   </div>
                 ))}
+
+                {isChatting && (
+                  <div className="message assistant thinking">
+                    <strong>VDA Agent:</strong> <span className="typing-dots">Thinking...</span>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
               </div>
               <div className="input-group">
                 <input 
                   value={chatInput}
+                  disabled={isChatting}
                   onChange={(e) => setChatInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Search video content..."
+                  placeholder={isChatting ? "AI is thinking..." : "Search video content..."}
                 />
-                <button onClick={handleSendMessage}>Ask AI</button>
+                <button onClick={handleSendMessage} disabled={isChatting || !chatInput}
+                >
+                  {isChatting ? "..." : "Ask AI"}
+                </button>
               </div>
             </div>
           </div>
