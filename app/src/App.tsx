@@ -183,11 +183,16 @@ function App() {
             <div 
               key={v.id} 
               className={`history-item ${activeVideoId === v.id ? 'active' : ''}`} 
-              onClick={() => handleSelectVideo(v.id)} // <--- MUST BE EXACTLY THIS
-              style={{ cursor: 'pointer', border: '1px solid #ccc', margin: '5px', padding: '10px' }}
+              onClick={() => handleSelectVideo(v.id)}
+              title={v.file_name} // Show full name on hover as a tooltip
             >
               <span>{v.file_name}</span>
-              <button onClick={(e) => handleDeleteVideo(v.id, e)}>×</button>
+              <button 
+                className="delete-btn" 
+                onClick={(e) => handleDeleteVideo(v.id, e)}
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
