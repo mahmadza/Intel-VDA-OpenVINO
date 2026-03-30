@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { ask } from '@tauri-apps/plugin-dialog';
 import "./App.css";
 
 function App() {
@@ -18,7 +19,7 @@ function App() {
   };
 
   useEffect(() => {
-    loadHistory(); // Load existing on mount
+    loadHistory(); // Load existing history
 
     const unlisten = listen("pipeline-progress", (event: any) => {
       setStatus(event.payload.status);
@@ -42,7 +43,6 @@ function App() {
       setHistory(data);
       return data;
     } catch (err) {
-      // This will catch if the command name is wrong or Rust panics
       console.error("CRITICAL INVOKE ERROR:", err);
       setStatus(`Failed to load history: ${err}`);
     }
@@ -95,6 +95,43 @@ function App() {
     }
   };
 
+  const handleDeleteVideo = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    const confirmed = await ask(
+      'This will permanently remove the analysis results from the database.', 
+      { 
+        title: 'Delete Analysis?',
+        kind: 'warning',
+        okLabel: 'Delete',
+        cancelLabel: 'Cancel'
+      }
+    );
+
+    if (confirmed) {
+      try {
+        console.log("🗑️ Deleting ID:", id);
+        await invoke("delete_video", { videoId: id });
+        
+        setHistory(prev => prev.filter(v => v.id !== id));
+        
+        if (activeVideoId === id) {
+          setActiveVideoId(null);
+          setMessages([]);
+        }
+        
+        setStatus("Video deleted successfully.");
+      } catch (err) {
+        console.error("❌ Delete failed:", err);
+        setStatus(`Error: ${err}`);
+      }
+    } else {
+      console.log("❌ Deletion cancelled by user.");
+    }
+  };
+
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -103,8 +140,19 @@ function App() {
         
         <div className="history-list">
           {history.map((v) => (
-            <div key={v.id} className="history-item" onClick={() => handleSelectVideo(v.id)}>
-              {v.file_name}
+            <div 
+              key={v.id} 
+              className={`history-item ${activeVideoId === v.id ? 'active' : ''}`} 
+              onClick={() => handleSelectVideo(v.id)}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
+              <span>{v.file_name}</span>
+              <button 
+                onClick={(e) => handleDeleteVideo(v.id, e)}
+                style={{ padding: '2px 8px', background: 'transparent', border: 'none', color: '#ff4d4f', fontSize: '1.2rem' }}
+              >
+                &times;
+              </button>
             </div>
           ))}
         </div>
@@ -151,6 +199,8 @@ function App() {
         )}
       </main>
     </div>
+
+    
   );
 }
 

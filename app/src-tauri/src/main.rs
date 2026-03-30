@@ -10,12 +10,20 @@ fn main() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir().expect("Failed to get data dir");
-            println!("📂 App Data Directory: {:?}", data_dir);
-            std::fs::create_dir_all(&data_dir).unwrap();
+            
+            if !data_dir.exists() {
+                std::fs::create_dir_all(&data_dir).map_err(|e| e.to_string())?;
+            }
+
             let db_path = data_dir.join("vda_intelligence.db");
             println!("🦀 Rust DB Path: {:?}", db_path);
+
             let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
             
+            // Enable WAL mode (Write-Ahead Logging) 
+            // This is CRITICAL for when both Rust and Python are touching the DB.
+            conn.execute("PRAGMA journal_mode=WAL;", []).ok();
+
             conn.execute_batch("
                 CREATE TABLE IF NOT EXISTS videos (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,7 +31,6 @@ fn main() {
                     file_name TEXT NOT NULL,
                     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 );
-
                 CREATE TABLE IF NOT EXISTS analysis_results (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     video_id INTEGER NOT NULL,
@@ -32,7 +39,6 @@ fn main() {
                     status TEXT,
                     FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
                 );
-
                 CREATE TABLE IF NOT EXISTS video_segments (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     video_id INTEGER NOT NULL,
@@ -51,7 +57,8 @@ fn main() {
             commands::select_video_file,
             commands::run_vda_pipeline,
             commands::get_video_history,
-            commands::send_chat_message
+            commands::send_chat_message,
+            commands::delete_video
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

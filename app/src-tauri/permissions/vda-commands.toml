@@ -4,5 +4,6 @@ description = "Allows the frontend to use VDA commands"
 commands.allow = [
     "run_vda_pipeline",
     "get_video_history",
-    "send_chat_message"
+    "send_chat_message",
+    "delete_video"
 ]

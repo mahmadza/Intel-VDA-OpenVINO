@@ -128,8 +128,28 @@ button {
   overflow-y: auto;
   margin-top: 10px;
 }
-.history-item { padding: 10px; cursor: pointer; border-radius: 4px; margin-bottom: 5px; }
-.history-item.active { background: #0078d4; color: white; }
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+.history-item:hover {
+  background: rgba(0, 120, 212, 0.1);
+}
+
+.history-item.active {
+  background: #0078d4;
+  color: white;
+}
+.history-item button:hover {
+  color: #ff7875 !important;
+  transform: scale(1.2);
+}
 .intelligence-view {
   display: flex;
   flex-direction: column;

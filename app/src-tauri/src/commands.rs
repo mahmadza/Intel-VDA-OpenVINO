@@ -154,3 +154,13 @@ fn save_to_db(db_state: &DbState, path: &str, data: AnalysisResult) -> Result<()
 
     Ok(())
 }
+
+#[tauri::command]
+pub async fn delete_video(db_state: tauri::State<'_, DbState>, video_id: i64) -> Result<(), String> {
+    let conn = db_state.0.lock().unwrap();
+    
+    conn.execute("DELETE FROM videos WHERE id = ?1", [video_id])
+        .map_err(|e| format!("Failed to delete video: {}", e))?;
+        
+    Ok(())
+}
