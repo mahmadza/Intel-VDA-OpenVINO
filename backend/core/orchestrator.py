@@ -33,7 +33,6 @@ class VideoOrchestrator:
         self.current_transcript = self.transcriber.transcribe(audio_path)
 
         yield "Analyzing visual content...", 0.6
-        # Analyze a subset of frames (e.g., first, middle, last)
         self.current_descriptions = []
         sample_size = min(5, len(frames))
         for i in range(sample_size):
@@ -43,7 +42,6 @@ class VideoOrchestrator:
             yield f"Analyzing frame {i+1}/{sample_size}...", progress
 
         yield "Finalizing report templates...", 0.9
-        # Pre-generate paths (actual generation happens on user request)
         yield "Video processing complete!", 1.0
 
     def generate_report(self, report_type="pdf"):

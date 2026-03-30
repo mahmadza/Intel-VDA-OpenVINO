@@ -42,13 +42,11 @@ pub async fn run_vda_pipeline(
     db_state: tauri::State<'_, DbState>, 
     path: String
 ) -> Result<String, String> {
-    // Explicitly typed client to satisfy E0282
     let mut client: VideoServiceClient<tonic::transport::Channel> = 
         VideoServiceClient::connect("http://127.0.0.1:50051")
             .await
             .map_err(|e| format!("Connection error: {}", e))?;
 
-    // Explicitly typed stream to satisfy E0282
     let mut stream: tonic::Streaming<crate::vda::ProgressUpdate> = 
         client.process_video(VideoRequest { file_path: path.clone() })
             .await
@@ -74,7 +72,6 @@ pub async fn send_chat_message(
     video_id: i64,
     message: String,
 ) -> Result<String, String> {
-    // Explicitly typed client
     let mut client: VideoServiceClient<tonic::transport::Channel> = 
         VideoServiceClient::connect("http://127.0.0.1:50051")
             .await
@@ -108,9 +105,6 @@ pub async fn get_video_history(db_state: tauri::State<'_, DbState>) -> Result<Ve
         .filter_map(|res| res.ok())
         .collect();
 
-    // LOOK AT YOUR TERMINAL FOR THIS PRINT:
-    println!("DEBUG: Rust found {} rows in the database", history.len());
-
     Ok(history)
 }
 
@@ -122,8 +116,6 @@ fn save_to_db(db_state: &DbState, path: &str, data: AnalysisResult) -> Result<()
         .and_then(|n| n.to_str())
         .unwrap_or("unknown_video");
 
-    // 1. Correctly handle the Video ID (Get existing or Create new)
-    // We use a query to check if it exists first
     let video_id: i64 = match conn.query_row(
         "SELECT id FROM videos WHERE file_path = ?1",
         params![path],
@@ -140,19 +132,19 @@ fn save_to_db(db_state: &DbState, path: &str, data: AnalysisResult) -> Result<()
         }
     };
 
-    // 2. Clean up old results for this video (so we don't have duplicates)
+    // Clean up old results for this video (so we don't have duplicates)
     conn.execute("DELETE FROM analysis_results WHERE video_id = ?1", params![video_id])
         .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM video_segments WHERE video_id = ?1", params![video_id])
         .map_err(|e| e.to_string())?;
 
-    // 3. Insert fresh Analysis Result
+    // Insert fresh analysis result
     conn.execute(
         "INSERT INTO analysis_results (video_id, transcription_text, summary, status) VALUES (?1, ?2, ?3, ?4)",
         params![video_id, data.transcription, data.summary, "completed"],
     ).map_err(|e| e.to_string())?;
 
-    // 4. Insert fresh Segments
+    // Insert fresh segments
     for seg in data.segments {
         conn.execute(
             "INSERT INTO video_segments (video_id, start_time, end_time, segment_type, content) VALUES (?1, ?2, ?3, ?4, ?5)",

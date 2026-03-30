@@ -46,7 +46,6 @@ class QueryAgent:
         if not context:
             return "I'm sorry, I don't have the analysis data for this video in my database yet."
 
-        # Use Phi-3/Llama-3 special tokens for better grounding
         prompt = f"""<|system|>
         You are the Intel VDA Intelligence Assistant.
         You are given the following text analysis of a video. 
