@@ -1,89 +1,79 @@
-# Intel-VDA-OpenVINO
+# Intel VDA: Local Video Intelligence Orchestrator
 
-### Local-First Video Data Analytics (VDA) Orchestrator
-
-**Intel-VDA-OpenVINO** is a high-performance, privacy-centric desktop application designed to transform raw video data into structured intelligence. It uses **Intel OpenVINO** to perform all inference (Audio & Vision) locally on the edge, ensuring zero data leakage and sub-second latency.
+**Intel VDA** is a high-performance, privacy-centric desktop application that transforms raw video data into queryable structured intelligence. Built for the **Intel GenAI Software Solutions** assessment, it demonstrates a robust multi-agent architecture optimized for local hardware via **OpenVINO**.
 
 -----
 
-## Key Features
+## 🚀 Key Features
 
-  * **Privacy-by-Design:** No video frames or transcripts ever leave your local machine.
-  * **Multi-Modal Pipeline:** Integrated **Whisper** (Audio) and **SmolVLM2** (Vision) agents.
-  * **Hardware Optimized:** Native support for Apple Silicon (M-Series) and Intel NPUs via the OpenVINO toolkit.
-  * **Real-Time Streaming:** gRPC-based communication provides a smooth, reactive UI experience during heavy AI tasks.
+* **100% Offline AI:** Privacy-first architecture. No data ever leaves the device.
+* **Agentic Intelligence:** Multi-agent routing for Transcription, Vision, and Report Generation.
+* **Human-in-the-Loop:** Active ambiguity detection that asks for clarification on vague queries.
+* **Persistent Memory:** SQLite-backed history for video analysis and chat conversations.
+* **Hardware Optimized:** Leverages $INT4$ quantization for LLMs and VLMs to run on consumer-grade CPUs and NPUs.
 
 -----
 
-## The Tech Stack
+## 🛠️ The Tech Stack
 
 | Layer | Technology |
 | :--- | :--- |
 | **Frontend** | React 19, Vite 7, TypeScript |
-| **Desktop Shell** | Tauri v2 (Rust) |
-| **Inference Engine** | OpenVINO Runtime (Python 3.10) |
-| **Communication** | gRPC (Tonic/Protobuf) |
-| **Models** | Whisper-base, SmolVLM2-256M |
+| **Middleware** | Tauri v2 (Rust), gRPC (Tonic), SQLite |
+| **AI Engine** | OpenVINO Runtime (Python 3.10) |
+| **Models** | Whisper-tiny, SmolVLM2-256M, Phi-3-Mini ($INT4$) |
 
 -----
 
-## Architecture Overview
+## 📈 Project Status
 
-The system utilizes a **Triad Architecture** to decouple the heavy computation backend from the lightweight interface.
-
-1.  **The Interface, React:** A modern UI for file management and report editing.
-2.  **The Bridge, Rust:** A secure middleware layer managing OS permissions and gRPC client-side streaming.
-3.  **The Engine, Python:** An OpenVINO-optimized orchestrator that handles multi-modal AI tasks.
-
-> **Deep Dive:** See [Architecture Documentation](docs/architecture/architecture.md) for data flow diagrams.
-
------
-
-## Project Status
-
-  * **Phase 1: Foundation** ✅
-      * gRPC Bridge & Protobuf contract established.
-      * Basic Rust-to-Python "Ping" connectivity.
-  * **Phase 2: Orchestration** ✅
-      * OpenVINO integration for Whisper & SmolVLM2.
-      * Real-time progress streaming to UI.
-      * Native OS File Picker integration.
-  * **Phase 3: Persistence & Interface** 🚧
-      * SQLite integration for historical analysis.
-      * RAG-based Chat interface for video querying.
-      * Export engine (PDF/PPTX).
+* **Phase 1: Foundation** ✅
+    * gRPC Bridge & Protobuf contract.
+* **Phase 2: Orchestration** ✅
+    * OpenVINO integration for Whisper & SmolVLM2.
+    * Real-time progress streaming.
+* **Phase 3: Persistence & Interface** ✅
+    * SQLite persistence for history and chat.
+    * Agentic HITL (Human-in-the-loop) ambiguity detection.
+    * Report Generation Engine (PDF/PPTX).
 
 -----
 
-## Quick Start (Development)
+## 📦 Installation & Setup
 
-### ADD INSTALLING THE CONDA ENV HERE
+### 1. Prerequisites
+* **Conda** (Miniconda or Anaconda)
+* **Node.js** (v18+)
+* **Rust** (Latest stable)
 
-### 1\. Start the AI Engine (Python)
-
+### 2. AI Engine Setup (Python)
 ```bash
+# Create and activate environment
+conda create -n vda_native python=3.10 -y
 conda activate vda_native
-python server.py
-```
 
-### 2\. Launch the Desktop App (Tauri)
+# Install dependencies
+pip install -r backend/requirements.txt
+````
 
-```bash
-npm run tauri dev
-```
+### 3\. Launching the Application
+
+1.  **Start Backend:** `python backend/server.py --db_path "/path/to/your/db"`
+2.  **Start Frontend:** `npm run tauri dev`
 
 -----
 
-## Engineering Standards
+## 📚 Architecture & ADRs
 
-This project maintains high transparency through **Architecture Decision Records (ADRs)**.
-
-  * [ADR-001: Model Selection (SmolVLM2 vs Moondream2)](docs/adr/001-vlm-selection.md)
-  * [ADR-002: gRPC Streaming Implementation](docs/adr/002-grpc-streaming.md)
-  * [ADR-003: Tauri v2 Command Isolation](docs/adr/003-command-isolation.md)
+  * [Full Architecture Overview](https://www.google.com/search?q=docs/architecture/architecture.md)
+  * [Data Flow Deep-Dive](https://www.google.com/search?q=docs/architecture/data-flow.md)
+  * [ADR-004: SQLite WAL Persistence](https://www.google.com/search?q=docs/adr/004-data-persistence-sqlite-wal.md)
+  * [ADR-005: Agentic HITL Orchestration](https://www.google.com/search?q=docs/adr/005-agentic-orchestration-intent-detection.md)
 
 -----
 
 ## License
 
-MIT - See [LICENSE](LICENSE.md) for details.
+MIT - Developed for Intel Assessment 2026.
+
+-----

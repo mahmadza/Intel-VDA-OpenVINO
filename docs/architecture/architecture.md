@@ -1,76 +1,69 @@
 # System Architecture: Intel VDA
 
 ## 1. Executive Summary
-Intel VDA is a **local-first AI Orchestrator** designed for high-performance video analysis. The system is architected to decouple the user interface from heavy computational tasks, ensuring UI responsiveness while maximizing hardware utilization (NPU/GPU) via the OpenVINO toolkit.
+Intel VDA is a **local-first AI Orchestrator** designed for high-performance video analysis. The system is architected as a **decoupled multi-service stack**, ensuring UI responsiveness while maximizing hardware utilization (NPU/GPU/CPU) via the OpenVINO toolkit.
 
+## 2. The Core Pillars
 
-## 2. The Triad Pattern
-The application is split into three distinct layers to ensure modularity and cross-language compatibility.
+### **A. Frontend (The Interface)**
+* **Stack:** React 19 + Vite 7 + TypeScript.
+* **State Management:** Stateless hydration; UI state is derived from the SQLite source of truth.
+* **Communication:** Tauri IPC for OS dialogs; gRPC via Rust bridge for high-throughput AI streaming.
 
+### **B. Middleware (The Secure Bridge)**
+* **Stack:** Rust (Tauri v2) + Tonic (gRPC) + Rusqlite.
+* **Role:** Manages the **Persistence Layer (SQLite)** and gRPC client life-cycle. 
+* **WAL Mode:** Configured with Write-Ahead Logging to allow concurrent read/write between the UI and the AI Engine.
 
-### **A. Frontend**
-* **Tech Stack:** React 19 + Vite 7 + TypeScript.
-* **Role:** Handles user interactions, file selection visualization, and real-time progress rendering.
-* **Communication:** Communicates with the Rust layer via **Tauri IPC (Inter-Process Communication)**.
-
-### **B. Middleware**
-* **Tech Stack:** Rust (Tauri v2) + Tonic (gRPC).
-* **Role:** Acts as the secure gatekeeper. It manages OS-level permissions (File System, Dialogs) and serves as the **gRPC Client** that translates frontend intents into backend commands.
-* **Security:** Implements the **Tauri v2 "Zero-Trust" Capability System**, where every command must be explicitly white-listed.
-
-### **C. Backend**
-* **Tech Stack:** Python 3.10 + OpenVINO + gRPC Server.
-* **Role:** The heavy-lifting engine. It hosts the **OpenVINO Inference Runtime**, orchestrating Whisper (Audio) and SmolVLM2 (Vision) models.
-* **Persistence:** Generates artifacts (PDF/PPTX) and manages the local AI pipeline.
+### **C. Backend (The Agentic Engine)**
+* **Stack:** Python 3.10 + OpenVINO + gRPC Server.
+* **Orchestration:** Implements an **Agentic Router** that handles multi-modal tasks:
+    * **Transcription Agent:** Whisper-base optimized for OpenVINO.
+    * **Vision Agent:** SmolVLM2 ($INT4$) for frame-by-frame intelligence.
+    * **Generation Agent:** Deterministic report engine (PDF/PPTX).
+    * **Query Agent:** Local LLM (Phi-3) with conversation memory and HITL ambiguity detection.
 
 ## 3. High-Level Component Diagram
 
 ```mermaid
-graph LR
-    subgraph UI_Layer [Frontend]
-        React[React / Vite]
+graph TD
+    subgraph Client_App [Desktop Application]
+        UI[React Frontend]
+        Rust[Tauri / Rust Bridge]
+        DB[(SQLite - WAL Mode)]
     end
 
-    subgraph Bridge_Layer [Middleware]
-        Tauri[Tauri v2 / Rust]
-        gRPC_C[gRPC Client]
+    subgraph AI_Engine [Local Sidecar]
+        Server[gRPC Server]
+        Orch[Agentic Orchestrator]
+        subgraph Agents
+            TA[Transcription]
+            VA[Vision]
+            QA[Query/HITL]
+            GA[Generation]
+        end
     end
 
-    subgraph Engine_Layer [Backend]
-        gRPC_S[gRPC Server]
-        Orch[Python Orchestrator]
-        OV[OpenVINO Runtime]
-    end
-
-    React <-->|Tauri IPC| Tauri
-    Tauri <--> gRPC_C
-    gRPC_C <==>|Protobuf / Stream| gRPC_S
-    gRPC_S <--> Orch
-    Orch <--> OV
+    UI <-->|IPC| Rust
+    Rust <--> DB
+    Rust <==>|gRPC / Protobuf| Server
+    Server <--> Orch
+    Orch <--> TA & VA & QA & GA
 ```
 
+## 4\. Design Decisions: Phase 3 Evolution
 
-## 4. Design Decisions & Rationale
+### **Agentic Gatekeeping (HITL)**
 
-### **Local-First Processing**
-* **Decision:** All inference is performed on the host machine.
-* **Rationale:** Ensures data privacy and eliminates latency/cost associated with cloud-based LLMs.
+  * **Decision:** Implemented a pre-inference "Intent Check" turn.
+  * **Rationale:** Prevents expensive model execution for vague queries. If the user query is ambiguous, the system prompts for clarification, satisfying the "Human-in-the-Loop" requirement.
 
-### **Asynchronous Progress Streaming**
-* **Decision:** Use gRPC Server-Side Streaming.
-* **Rationale:** Standard REST/JSON is blocking. Streaming allows the backend to "push" percentage updates to the frontend without the frontend having to poll the server.
+### **Persistence & Memory Hydration**
 
-### **Model Optimization (OpenVINO)**
-* **Decision:** Quantize models to INT4/FP16.
-* **Rationale:** Optimizes memory bandwidth on Apple Silicon's Unified Memory and Intel's Integrated Graphics/NPUs, allowing multiple models to reside in RAM simultaneously.
+  * **Decision:** SQLite-backed chat history.
+  * **Rationale:** Local LLMs are stateless. By injecting the last 5 turns of conversation from SQLite into the prompt context, we achieve a "long-term memory" effect without bloating the KV-cache.
 
-
-## 5. Security Model (Tauri v2)
-To prevent malicious frontend scripts from accessing the file system, we utilize **Scoped Permissions**:
-1.  **Dialog Scope:** Only allows the file picker to return paths for specific video extensions (`.mp4`, `.mkv`).
-2.  **Command Scope:** The `run_vda_pipeline` command is isolated in its own module (`commands.rs`) and requires explicit authorization in `capabilities/default.json`.
+<!-- end list -->
 
 
-## 6. Future Scalability
-* **SQLite Integration:** Planned for Phase 3 to provide persistent storage for processed video metadata.
-* **Vector Database:** Ability to index VLM-generated descriptions for semantic search within long video files.
+

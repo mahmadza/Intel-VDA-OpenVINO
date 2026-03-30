@@ -1,0 +1,27 @@
+# --- Core gRPC Communication ---
+grpcio==1.62.1
+grpcio-tools==1.62.1
+protobuf==4.25.3
+
+# --- Intel OpenVINO Stack ---
+openvino==2024.0.0
+openvino-genai==2024.0.0
+optimum-intel[openvino]==1.15.0
+nncf==2.9.0
+
+# --- AI Frameworks & Transformers ---
+transformers==4.38.2
+torch==2.2.1
+pillow==10.2.0
+
+# --- Video & Audio Processing ---
+opencv-python-headless==4.9.0.80
+moviepy==1.0.3
+librosa==0.10.1
+
+# --- Report Generation ---
+python-pptx==0.6.23
+reportlab==4.1.0
+
+# --- Utilities ---
+numpy==1.26.4
