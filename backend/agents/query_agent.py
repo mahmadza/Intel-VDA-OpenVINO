@@ -43,26 +43,56 @@ class QueryAgent:
         except Exception as e:
             print(f"❌ DB Query Error: {e}")
             return ""
+        
+    def _get_chat_history(self, video_id, limit=5):
+        """Fetches the last N messages to provide conversation context."""
+        if not self.db_path or not os.path.exists(self.db_path):
+            return ""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT role, content FROM chat_messages WHERE video_id = ? ORDER BY id DESC LIMIT ?", 
+                (video_id, limit)
+            )
+            rows = cursor.fetchall()
+            conn.close()
+            
+            # Reverse messages so they are in chronological order
+            history = []
+            for role, content in reversed(rows):
+                prefix = "User" if role == "user" else "Assistant"
+                history.append(f"{prefix}: {content}")
+            return "\n".join(history)
+        except Exception as e:
+            print(f"❌ Chat History Error: {e}")
+            return ""
 
     def chat(self, video_id, user_query):
         context = self._get_video_context(video_id)
+        chat_history = self._get_chat_history(video_id)
+
+        # Ambiguity check
+        check_prompt = f"""<|system|>
+        Analyze the user's query. Is it specific enough to answer using the context? 
+        If it is vague (e.g. "What is that?", "Tell me more"), output "AMBIGUOUS".
+        Otherwise, output "CLEAR".
+        QUERY: {user_query}
+        <|end|>
+        <|assistant|>"""
         
-        if not context:
-            return "Analysis in progress. Please wait for the results to be saved."
+        decision = self.pipe.generate(check_prompt, max_new_tokens=10).strip()
 
+        if "AMBIGUOUS" in decision.upper():
+            return "I'm not sure which part of the video you're referring to. Could you clarify if you mean the audio discussion or one of the visual objects I found?"
+        
         prompt = f"""<|system|>
-    You are the Intel Video Intelligence Expert. You have just completed a full forensic analysis of a video file.
-    Below are your findings (Transcription and Visual Observations). 
-    Use these findings to answer the user's question directly and confidently.
-
-    ### YOUR ANALYSIS NOTES:
+    You are the Intel Video Intelligence Expert. Use the Analysis Notes and Chat History to answer.
+    ### ANALYSIS NOTES:
     {context}
 
-    ### RULES:
-    1. Do NOT mention you are an AI or that you cannot watch videos. 
-    2. Do NOT say you cannot provide verbatim audio; you have the transcript, so use it.
-    3. If asked about 'the audio', refer to the TRANSCRIPT section.
-    4. If asked about 'the video' or 'visuals', refer to the VISUAL OBSERVATIONS section.
+    ### RECENT CHAT HISTORY:
+    {chat_history}
     <|end|>
     <|user|>
     {user_query}<|end|>
