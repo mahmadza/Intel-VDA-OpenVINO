@@ -1,6 +1,7 @@
 import openvino_genai as ov_genai
 import sqlite3
 import os
+from agents.generation_agent import GenerationAgent
 
 class QueryAgent:
     def __init__(self, model_path="models/phi3-mini-int4-ov", db_path=None):
@@ -12,6 +13,7 @@ class QueryAgent:
         print(f"--- This may take a while ---")
         self.pipe = ov_genai.LLMPipeline(model_path, "CPU")
         self.db_path = db_path
+        self.generator = GenerationAgent()
 
     def _get_video_context(self, video_id):
         if not self.db_path or not os.path.exists(self.db_path):
@@ -72,6 +74,30 @@ class QueryAgent:
         context = self._get_video_context(video_id)
         chat_history = self._get_chat_history(video_id)
 
+        norm_query = user_query.strip().upper()
+
+        # If the user provides a direct format after we asked
+        if norm_query in ["PDF", "PPT", "POWERPOINT"]:
+            format_type = "pdf" if norm_query == "PDF" else "pptx"
+            report_text = f"ANALYSIS:\n{context}\n\nCHAT HISTORY:\n{chat_history}"
+            
+            if format_type == "pdf":
+                path = self.generator.create_pdf(report_text)
+            else:
+                path = self.generator.create_ppt(context, chat_history)
+            return f"SUCCESS_FILE: {path}"
+
+        # General request check
+        if "REPORT" in norm_query or "GENERATE" in norm_query:
+            if "PDF" in norm_query:
+                path = self.generator.create_pdf(f"ANALYSIS:\n{context}\n\nCHAT HISTORY:\n{chat_history}")
+                return f"SUCCESS_FILE: {path}"
+            elif "PPT" in norm_query or "POWERPOINT" in norm_query:
+                path = self.generator.create_ppt(context, chat_history)
+                return f"SUCCESS_FILE: {path}"
+            else:
+                return "I can certainly generate a report for you. Would you prefer a PDF summary or a PowerPoint presentation?"
+        
         # Ambiguity check
         check_prompt = f"""<|system|>
         Analyze the user's query. Is it specific enough to answer using the context? 
@@ -87,15 +113,27 @@ class QueryAgent:
             return "I'm not sure which part of the video you're referring to. Could you clarify if you mean the audio discussion or one of the visual objects I found?"
         
         prompt = f"""<|system|>
-    You are the Intel Video Intelligence Expert. Use the Analysis Notes and Chat History to answer.
-    ### ANALYSIS NOTES:
-    {context}
+        You are a Technical Video Analyst. Your ONLY job is to answer questions using the provided ANALYSIS NOTES.
+        
+        ### STRICT RULES:
+        1. Only use the provided ANALYSIS NOTES. 
+        2. If information is not in the notes, state: "That information is not present in the video analysis."
+        3. Do NOT describe your general AI capabilities or list features.
+        4. Be concise and clinical. No "meandering" or introductory fluff.
+        5. If the user asks about "you" or "your capabilities", redirect them to ask about the video content.
 
-    ### RECENT CHAT HISTORY:
-    {chat_history}
-    <|end|>
-    <|user|>
-    {user_query}<|end|>
-    <|assistant|>
-    """
-        return self.pipe.generate(prompt, max_new_tokens=400).strip()
+        ### ANALYSIS NOTES:
+        {context}
+
+        ### RECENT CHAT HISTORY (FOR CONTEXT):
+        {chat_history}
+        <|end|>
+        <|user|>
+        {user_query}<|end|>
+        <|assistant|>
+        """
+        # Use a low max_new_tokens to force conciseness
+        response = self.pipe.generate(prompt, max_new_tokens=200).strip()
+        
+        # Clean up any residual hallucinated prefixes
+        return response.split("Assistant:")[-1].strip()

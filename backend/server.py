@@ -12,10 +12,12 @@ class VideoService(vda_pb2_grpc.VideoServiceServicer):
         if db_path is None:
             # Fallback that actually works on any Mac/Linux
             db_path = os.path.expanduser("~/Library/Application Support/com.intel.vda/vda_intelligence.db")
-
+        
         print(f"--- 💾 Backend DB Path: {db_path} ---")
         self.orchestrator = VideoOrchestrator(db_path=db_path)
 
+        self.db_dir = os.path.dirname(db_path)
+        
     def Chat(self, request, context):
         print(f"Chat received for Video ID {request.video_id}: {request.message}")
         try:

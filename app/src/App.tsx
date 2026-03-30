@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { ask } from '@tauri-apps/plugin-dialog';
+import { openPath } from '@tauri-apps/plugin-opener';
 import "./App.css";
 
 function App() {
@@ -98,22 +99,39 @@ function App() {
 
   const handleSendMessage = async () => {
     if (!chatInput || !activeVideoId || isChatting) return;
-    const userMsg = { role: "user", content: chatInput };
-    setMessages(prev => [...prev, userMsg]);
-    setChatInput("");
 
+    const currentInput = chatInput; // Capture the input before clearing
+    setMessages(prev => [...prev, { role: "user", content: currentInput }]);
+    setChatInput("");
+    
+    console.log("⏳ UI: Setting isChatting to TRUE");
     setIsChatting(true);
     
     try {
       const aiReply = await invoke<string>("send_chat_message", { 
         videoId: activeVideoId, 
-        message: chatInput 
+        message: currentInput 
       });
-      setMessages(prev => [...prev, { role: "assistant", content: aiReply }]);
+
+      console.log("📩 UI: Received AI response");
+
+      // Handle File Generation or regular reply
+      if (aiReply.startsWith("SUCCESS_FILE: ")) {
+        const filePath = aiReply.replace("SUCCESS_FILE: ", "").trim();
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: `✅ Report generated successfully!\n\nPath: ${filePath}` 
+        }]);
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: aiReply }]);
+      }
+
     } catch (err) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${err}` }]);
+      console.error("❌ UI: Chat Invoke Error:", err);
+      setMessages(prev => [...prev, { role: "assistant", content: `System Error: ${err}` }]);
     } finally {
-      setIsChatting(false);
+      console.log("✅ UI: Setting isChatting to FALSE");
+      setIsChatting(false); // This MUST run regardless of success or error
     }
   };
 
@@ -195,7 +213,7 @@ function App() {
 
                 {isChatting && (
                   <div className="message assistant thinking">
-                    <strong>VDA Agent:</strong> <span className="typing-dots">Thinking...</span>
+                    <strong>Intel AI Analyst:</strong> <span className="typing-dots">Thinking...</span>
                   </div>
                 )}
                 <div ref={chatEndRef} />
