@@ -48,8 +48,17 @@ fn main() {
                     content TEXT,
                     FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
                 );
+                CREATE TABLE IF NOT EXISTS chat_messages (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    video_id INTEGER NOT NULL,
+                    role TEXT NOT NULL, -- 'user' or 'assistant'
+                    content TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+                );
             ").expect("Failed to initialize database schema");
 
+            
             app.manage(commands::DbState(Mutex::new(conn)));
             Ok(())
         })
@@ -58,7 +67,8 @@ fn main() {
             commands::run_vda_pipeline,
             commands::get_video_history,
             commands::send_chat_message,
-            commands::delete_video
+            commands::delete_video,
+            commands::get_chat_history  // <--- IF THIS IS MISSING, REACT GETS NOTHING
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

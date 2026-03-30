@@ -48,31 +48,53 @@ function App() {
     }
   };
 
-  const handleSelectVideo = (id: number) => {
+  const handleSelectVideo = async (id: number) => {
+    console.log("--- 🖱️ UI START: handleSelectVideo ---");
+
     setActiveVideoId(id);
     setMessages([]); 
-    setStatus(`Viewing Video ID: ${id}`);
+
+    try {
+      const chatHistory = await invoke<any[]>("get_chat_history", { videoId: id });
+      console.log("--- 📦 DATABASE RETURNED ---", chatHistory);
+      
+      if (chatHistory) {
+        setMessages(chatHistory);
+      }
+    } catch (err) {
+      console.error("--- ❌ INVOKE FAILED ---", err);
+      alert("Invoke Error: " + err);
+    }
   };
 
   const handleProcess = async () => {
     try {
       const path = await invoke<string>("select_video_file");
       
-      setStatus("Starting analysis...");
-      setProgress(0); // Reset bar
+      // 1. CLEAR the active video to force the UI back to the "Welcome/Loading" screen
+      setActiveVideoId(null);
+      setMessages([]);
       
+      // 2. Reset progress and status
+      setStatus("Starting analysis...");
+      setProgress(0); 
+      
+      // 3. Run the pipeline (this will emit 'pipeline-progress' events)
       await invoke("run_vda_pipeline", { path });
+      
       setStatus("Analysis Complete");
       const updatedHistory = await loadHistory();
       
+      // 4. Once finished, automatically jump to the new video
       if (updatedHistory && updatedHistory.length > 0) {
         handleSelectVideo(updatedHistory[0].id);
       }
       
     } catch (err) {
       setStatus(`Error: ${err}`);
+      console.error(err);
     }
-};
+  };
 
   const handleSendMessage = async () => {
     if (!chatInput || !activeVideoId || isChatting) return;
@@ -143,29 +165,31 @@ function App() {
             <div 
               key={v.id} 
               className={`history-item ${activeVideoId === v.id ? 'active' : ''}`} 
-              onClick={() => handleSelectVideo(v.id)}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              onClick={() => handleSelectVideo(v.id)} // <--- MUST BE EXACTLY THIS
+              style={{ cursor: 'pointer', border: '1px solid #ccc', margin: '5px', padding: '10px' }}
             >
               <span>{v.file_name}</span>
-              <button 
-                onClick={(e) => handleDeleteVideo(v.id, e)}
-                style={{ padding: '2px 8px', background: 'transparent', border: 'none', color: '#ff4d4f', fontSize: '1.2rem' }}
-              >
-                &times;
-              </button>
+              <button onClick={(e) => handleDeleteVideo(v.id, e)}>×</button>
             </div>
           ))}
         </div>
       </aside>
 
       <main className="main-content">
+        {(progress > 0 && progress < 100) && (
+          <div className="global-progress">
+            <p><strong>{status}</strong></p>
+            <progress value={progress} max={100} style={{ width: '100%', height: '10px' }} />
+            <span style={{ fontSize: '0.8rem', color: '#666' }}>{Math.round(progress)}% Complete</span>
+          </div>
+        )}
         {activeVideoId ? (
           <div className="intelligence-view">
             <div className="chat-container">
               <div className="messages-log">
                 {messages.map((m, i) => (
                   <div key={i} className={`message ${m.role}`}>
-                    <strong>{m.role === 'user' ? 'User' : 'VDA Agent'}:</strong> {m.content}
+                    <strong>{m.role === 'user' ? 'You' : 'Intel AI Analyst'}:</strong> {m.content}
                   </div>
                 ))}
 
@@ -193,8 +217,8 @@ function App() {
           </div>
         ) : (
           <div className="welcome-screen">
-            <h2>{status === "Ready" ? "Select a video to begin" : status}</h2>
-            {progress > 0 && <progress value={progress} max={100} />}
+            <h2>{progress > 0 && progress < 100 ? "" : "Select a video to begin"}</h2>
+            {status === "Ready" && <p>Upload an .mp4 to start local analysis.</p>}
           </div>
         )}
       </main>

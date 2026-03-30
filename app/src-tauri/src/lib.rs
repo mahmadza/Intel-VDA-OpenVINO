@@ -13,7 +13,8 @@ pub fn run() {
             commands::run_vda_pipeline,
             commands::get_video_history,
             commands::send_chat_message,
-            commands::delete_video
+            commands::delete_video,
+            commands::get_chat_history
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

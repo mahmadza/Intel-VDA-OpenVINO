@@ -207,3 +207,17 @@ button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
+
+.global-progress {
+  background: #e6f7ff;
+  border: 1px solid #91d5ff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

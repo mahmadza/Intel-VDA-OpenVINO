@@ -9,7 +9,7 @@ class QueryAgent:
         db_path: Path to the SQLite DB managed by Tauri/Rust.
         """
         print(f"--- 🤖 Loading Query Agent ---")
-        print(f"--- 📂 DB Path configured as: {db_path}")
+        print(f"--- This may take a while ---")
         self.pipe = ov_genai.LLMPipeline(model_path, "CPU")
         self.db_path = db_path
 
@@ -48,16 +48,24 @@ class QueryAgent:
         context = self._get_video_context(video_id)
         
         if not context:
-            return "I have not finished analyzing this video yet. Please wait a moment."
+            return "Analysis in progress. Please wait for the results to be saved."
 
         prompt = f"""<|system|>
-    You are the Intel VDA Video Expert. You have just watched a video and taken the following notes. 
-    Answer the user's question using ONLY these notes. If the answer isn't in the notes, say you don't see that specific detail.
-    NOTES:
+    You are the Intel Video Intelligence Expert. You have just completed a full forensic analysis of a video file.
+    Below are your findings (Transcription and Visual Observations). 
+    Use these findings to answer the user's question directly and confidently.
+
+    ### YOUR ANALYSIS NOTES:
     {context}
+
+    ### RULES:
+    1. Do NOT mention you are an AI or that you cannot watch videos. 
+    2. Do NOT say you cannot provide verbatim audio; you have the transcript, so use it.
+    3. If asked about 'the audio', refer to the TRANSCRIPT section.
+    4. If asked about 'the video' or 'visuals', refer to the VISUAL OBSERVATIONS section.
     <|end|>
     <|user|>
     {user_query}<|end|>
     <|assistant|>
     """
-        return self.pipe.generate(prompt, max_new_tokens=300)
+        return self.pipe.generate(prompt, max_new_tokens=400).strip()

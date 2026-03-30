@@ -24,25 +24,29 @@ class VideoOrchestrator:
     
     def process_new_video(self, video_path):
         """
-        Runs the full pipeline and yields status updates for gRPC
+        Runs the full pipeline with status updates
         """
-        yield "Extracting audio and frames...", 0.1
+        yield "STEP 1/4: Extracting audio and keyframes...", 0.1
         audio_path, frames = self.processor.process_video(video_path)
 
-        yield "Transcribing audio (OpenVINO)...", 0.3
+        yield "STEP 2/4: Transcribing speech (OpenVINO)...", 0.3
         self.current_transcript = self.transcriber.transcribe(audio_path)
 
-        yield "Analyzing visual content...", 0.6
+        yield "STEP 3/4: Analyzing visual intelligence...", 0.5
         self.current_descriptions = []
-        sample_size = min(5, len(frames))
+        
+        # Fix to 12 frames for ~1 minute video
+        sample_size = min(12, len(frames)) 
+        
         for i in range(sample_size):
             desc = self.vision.analyze_frame(frames[i], prompt="What objects or graphs are visible?")
             self.current_descriptions.append(desc)
-            progress = 0.6 + (i / sample_size) * 0.3
-            yield f"Analyzing frame {i+1}/{sample_size}...", progress
+            
+            progress = 0.5 + (i / sample_size) * 0.4 
+            yield f"STEP 3/4: Processing visual frame {i+1} of {sample_size}...", progress
 
-        yield "Finalizing report templates...", 0.9
-        yield "Video processing complete!", 1.0
+        yield "STEP 4/4: Finalizing intelligence report...", 0.9
+        yield "Analysis Complete!", 1.0
 
     def generate_report(self, report_type="pdf"):
         if report_type == "pptx":

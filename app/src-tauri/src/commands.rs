@@ -20,6 +20,12 @@ pub struct VideoHistory {
     pub created_at: String,
 }
 
+#[derive(Serialize)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
+}
+
 pub struct DbState(pub Mutex<Connection>);
 
 #[tauri::command]
@@ -69,20 +75,40 @@ pub async fn run_vda_pipeline(
 
 #[tauri::command]
 pub async fn send_chat_message(
+    db_state: tauri::State<'_, DbState>, // Add DB state access
     video_id: i64,
     message: String,
 ) -> Result<String, String> {
-    let mut client: VideoServiceClient<tonic::transport::Channel> = 
-        VideoServiceClient::connect("http://127.0.0.1:50051")
-            .await
-            .map_err(|e| format!("Connection error: {}", e))?;
+    // 1. Save User Message to DB
+    {
+        let conn = db_state.0.lock().unwrap();
+        conn.execute(
+            "INSERT INTO chat_messages (video_id, role, content) VALUES (?1, 'user', ?2)",
+            params![video_id, message],
+        ).map_err(|e| e.to_string())?;
+    }
 
-    let response = client.chat(ChatRequest {
-        video_id,
-        message,
-    }).await.map_err(|e| format!("Chat error: {}", e))?;
+    // 2. Call gRPC Backend
+    let mut client = VideoServiceClient::connect("http://127.0.0.1:50051")
+        .await
+        .map_err(|e| format!("Connection error: {}", e))?;
 
-    Ok(response.into_inner().reply)
+    let response = client.chat(ChatRequest { video_id, message })
+        .await
+        .map_err(|e| format!("Chat error: {}", e))?;
+
+    let ai_reply = response.into_inner().reply;
+
+    // 3. Save Assistant Message to DB
+    {
+        let conn = db_state.0.lock().unwrap();
+        conn.execute(
+            "INSERT INTO chat_messages (video_id, role, content) VALUES (?1, 'assistant', ?2)",
+            params![video_id, ai_reply],
+        ).map_err(|e| e.to_string())?;
+    }
+
+    Ok(ai_reply)
 }
 
 #[tauri::command]
@@ -163,4 +189,27 @@ pub async fn delete_video(db_state: tauri::State<'_, DbState>, video_id: i64) ->
         .map_err(|e| format!("Failed to delete video: {}", e))?;
         
     Ok(())
+}
+
+#[tauri::command]
+pub async fn get_chat_history(
+    db_state: tauri::State<'_, DbState>, 
+    video_id: i64
+) -> Result<Vec<ChatMessage>, String> {
+    println!("🔍 Rust: Fetching chat for ID: {}", video_id);
+    let conn = db_state.0.lock().unwrap();
+    let mut stmt = conn
+        .prepare("SELECT role, content FROM chat_messages WHERE video_id = ?1 ORDER BY id ASC")
+        .map_err(|e| e.to_string())?;
+
+    let history = stmt.query_map([video_id], |row| {
+        Ok(ChatMessage {
+            role: row.get(0)?,
+            content: row.get(1)?,
+        })
+    }).map_err(|e| e.to_string())?
+      .filter_map(|res| res.ok())
+      .collect();
+
+    Ok(history)
 }
