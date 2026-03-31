@@ -4,13 +4,12 @@ import os
 from agents.generation_agent import GenerationAgent
 
 class QueryAgent:
-    def __init__(self, model_path="models/phi3-mini-int4-ov", db_path=None):
-        """
-        Initializes the local LLM via OpenVINO.
-        db_path: Path to the SQLite DB managed by Tauri/Rust.
-        """
-        print(f"--- 🤖 Loading Query Agent ---")
-        print(f"--- This may take a while ---")
+    def __init__(self, model_path=None, db_path=None):
+        if model_path is None:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            model_path = os.path.join(base_dir, "models", "llm")
+        
+        print(f"--- 🤖 Loading Query Agent from: {model_path} ---")
         self.pipe = ov_genai.LLMPipeline(model_path, "CPU")
         self.db_path = db_path
         self.generator = GenerationAgent()

@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tvda.proto\x12\x03vda\"!\n\x0cVideoRequest\x12\x11\n\tfile_path\x18\x01 \x01(\t\"\x07\n\x05\x45mpty\"\x17\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\"[\n\x0cVideoSegment\x12\x12\n\nstart_time\x18\x01 \x01(\x02\x12\x10\n\x08\x65nd_time\x18\x02 \x01(\x02\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12\x14\n\x0csegment_type\x18\x04 \x01(\t\"]\n\x0e\x41nalysisResult\x12\x15\n\rtranscription\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t\x12#\n\x08segments\x18\x03 \x03(\x0b\x32\x11.vda.VideoSegment\"q\n\x0eProgressUpdate\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12,\n\nfinal_data\x18\x03 \x01(\x0b\x32\x13.vda.AnalysisResultH\x00\x88\x01\x01\x42\r\n\x0b_final_data\"0\n\x0b\x43hatRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x10\n\x08video_id\x18\x02 \x01(\x03\"\x1d\n\x0c\x43hatResponse\x12\r\n\x05reply\x18\x01 \x01(\t2\x94\x01\n\x0cVideoService\x12\x1d\n\x04Ping\x12\n.vda.Empty\x1a\t.vda.Pong\x12\x38\n\x0cProcessVideo\x12\x11.vda.VideoRequest\x1a\x13.vda.ProgressUpdate0\x01\x12+\n\x04\x43hat\x12\x10.vda.ChatRequest\x1a\x11.vda.ChatResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tvda.proto\x12\x03vda\"!\n\x0cVideoRequest\x12\x11\n\tfile_path\x18\x01 \x01(\t\"\x07\n\x05\x45mpty\"\x17\n\x04Pong\x12\x0f\n\x07message\x18\x01 \x01(\t\"[\n\x0cVideoSegment\x12\x12\n\nstart_time\x18\x01 \x01(\x02\x12\x10\n\x08\x65nd_time\x18\x02 \x01(\x02\x12\x0f\n\x07\x63ontent\x18\x03 \x01(\t\x12\x14\n\x0csegment_type\x18\x04 \x01(\t\"]\n\x0e\x41nalysisResult\x12\x15\n\rtranscription\x18\x01 \x01(\t\x12\x0f\n\x07summary\x18\x02 \x01(\t\x12#\n\x08segments\x18\x03 \x03(\x0b\x32\x11.vda.VideoSegment\"q\n\x0eProgressUpdate\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x12\n\npercentage\x18\x02 \x01(\x02\x12,\n\nfinal_data\x18\x03 \x01(\x0b\x32\x13.vda.AnalysisResultH\x00\x88\x01\x01\x42\r\n\x0b_final_data\"0\n\x0b\x43hatRequest\x12\x0f\n\x07message\x18\x01 \x01(\t\x12\x10\n\x08video_id\x18\x02 \x01(\x03\"\x1d\n\x0c\x43hatResponse\x12\r\n\x05reply\x18\x01 \x01(\t\"G\n\x0cSystemStatus\x12\x10\n\x08is_ready\x18\x01 \x01(\x08\x12\x14\n\x0cmodels_found\x18\x02 \x01(\x08\x12\x0f\n\x07message\x18\x03 \x01(\t2\xc6\x01\n\x0cVideoService\x12\x1d\n\x04Ping\x12\n.vda.Empty\x1a\t.vda.Pong\x12\x38\n\x0cProcessVideo\x12\x11.vda.VideoRequest\x1a\x13.vda.ProgressUpdate0\x01\x12+\n\x04\x43hat\x12\x10.vda.ChatRequest\x1a\x11.vda.ChatResponse\x12\x30\n\x0fGetSystemStatus\x12\n.vda.Empty\x1a\x11.vda.SystemStatusb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -47,6 +47,8 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_CHATREQUEST']._serialized_end=438
   _globals['_CHATRESPONSE']._serialized_start=440
   _globals['_CHATRESPONSE']._serialized_end=469
-  _globals['_VIDEOSERVICE']._serialized_start=472
-  _globals['_VIDEOSERVICE']._serialized_end=620
+  _globals['_SYSTEMSTATUS']._serialized_start=471
+  _globals['_SYSTEMSTATUS']._serialized_end=542
+  _globals['_VIDEOSERVICE']._serialized_start=545
+  _globals['_VIDEOSERVICE']._serialized_end=743
 # @@protoc_insertion_point(module_scope)

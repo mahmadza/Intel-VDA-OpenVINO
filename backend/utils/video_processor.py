@@ -1,6 +1,7 @@
 import cv2
 import os
 from moviepy import VideoFileClip
+import shutil
 
 class VideoProcessor:
     @staticmethod
@@ -31,3 +32,11 @@ class VideoProcessor:
         cap.release()
         
         return audio_path, frame_paths
+
+    def cleanup_temp(self):
+        temp_dir = os.path.join(os.path.dirname(__file__), "..", "temp")
+        if os.path.exists(temp_dir):
+            # Deletes the folder and all contents
+            shutil.rmtree(temp_dir)
+            os.makedirs(temp_dir) # Recreate empty for next run
+            print("🧹 Temp files cleaned.")

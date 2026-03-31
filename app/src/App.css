@@ -252,3 +252,112 @@ button:disabled {
   to { transform: translateY(0); opacity: 1; }
 }
 
+.system-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  margin-top: auto; /* Push to bottom of sidebar */
+  font-size: 0.85rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ccc;
+}
+
+.status-dot.online { background: #52c41a; box-shadow: 0 0 8px #52c41a; } /* Green */
+.status-dot.offline { background: #ff4d4f; box-shadow: 0 0 8px #ff4d4f; } /* Red */
+.status-dot.warning { background: #faad14; box-shadow: 0 0 8px #faad14; } /* Orange */
+.status-dot.busy { background: #1890ff; animation: blink 1s infinite; }   /* Blue */
+
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.hero-header h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  color: #0068b5; /* Intel Blue */
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 50px;
+}
+
+.feature-card {
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  transition: transform 0.2s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  border-color: #0068b5;
+}
+
+.feature-card .icon {
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+.getting-started {
+  text-align: left;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.steps {
+  margin-top: 20px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.step-num {
+  background: #0068b5;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.processing-hero {
+  text-align: center;
+  padding: 100px 20px;
+}

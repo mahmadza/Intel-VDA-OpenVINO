@@ -57,6 +57,28 @@ class VideoService(vda_pb2_grpc.VideoServiceServicer):
             final_data=final_payload
         )
 
+    def GetSystemStatus(self, request, context):
+        model_path = os.path.join(os.path.dirname(__file__), "models")
+        required_models = ["llm", "vision", "whisper"]
+        
+        missing = []
+        for m in required_models:
+            if not os.path.exists(os.path.join(model_path, m)):
+                missing.append(m)
+                
+        if missing:
+            return vda_pb2.SystemStatus(
+                is_ready=True, 
+                models_found=False, 
+                message=f"Missing models: {', '.join(missing)}"
+            )
+        
+        return vda_pb2.SystemStatus(
+            is_ready=True, 
+            models_found=True, 
+            message="All systems operational"
+        )
+
 def serve():
     parser = argparse.ArgumentParser()
     parser.add_argument("--db_path", type=str, required=True, help="Path to SQLite DB")

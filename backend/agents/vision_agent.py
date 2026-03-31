@@ -1,18 +1,30 @@
 from optimum.intel.openvino import OVModelForVisualCausalLM
 from transformers import AutoProcessor
 from PIL import Image
-import torch
+from pathlib import Path
 
 class VisionAgent:
-    def __init__(self, model_id="HuggingFaceTB/SmolVLM2-256M-Instruct"):
-        print(f"Loading Native OpenVINO Vision Model: {model_id}...")
+    def __init__(self, model_path=None):
+        if model_path is None:
+            current_file = Path(__file__).resolve()
+            model_path = current_file.parent.parent / "models" / "vision"
+
+        print(f"--- 👁️ Loading Vision Agent from: {model_path} ---")
         
+        model_xml = model_path / "openvino_model.xml"
+        should_export = not model_xml.exists()
+
+        if should_export:
+            print("📦 One-time export: Converting SmolVLM2 to OpenVINO IR...")
+
         self.model = OVModelForVisualCausalLM.from_pretrained(
-            model_id,
-            export=True,
+            str(model_path),
             device="CPU",
+            export=should_export, # 👈 True only if .xml is missing
+            local_files_only=True,
+            compile=True
         )
-        self.processor = AutoProcessor.from_pretrained(model_id)
+        self.processor = AutoProcessor.from_pretrained(str(model_path), local_files_only=True)
 
     def analyze_frame(self, image_path, prompt="Describe this image."):
         image = Image.open(image_path).convert("RGB")

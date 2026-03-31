@@ -6,5 +6,6 @@ commands.allow = [
     "get_video_history",
     "send_chat_message",
     "delete_video",
-    "get_chat_history"
+    "get_chat_history",
+    "check_engine_status"
 ]

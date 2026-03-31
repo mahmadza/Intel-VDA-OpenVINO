@@ -49,6 +49,11 @@ class VideoServiceStub(object):
                 request_serializer=vda__pb2.ChatRequest.SerializeToString,
                 response_deserializer=vda__pb2.ChatResponse.FromString,
                 _registered_method=True)
+        self.GetSystemStatus = channel.unary_unary(
+                '/vda.VideoService/GetSystemStatus',
+                request_serializer=vda__pb2.Empty.SerializeToString,
+                response_deserializer=vda__pb2.SystemStatus.FromString,
+                _registered_method=True)
 
 
 class VideoServiceServicer(object):
@@ -72,6 +77,13 @@ class VideoServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetSystemStatus(self, request, context):
+        """<--- New Call
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_VideoServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -89,6 +101,11 @@ def add_VideoServiceServicer_to_server(servicer, server):
                     servicer.Chat,
                     request_deserializer=vda__pb2.ChatRequest.FromString,
                     response_serializer=vda__pb2.ChatResponse.SerializeToString,
+            ),
+            'GetSystemStatus': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetSystemStatus,
+                    request_deserializer=vda__pb2.Empty.FromString,
+                    response_serializer=vda__pb2.SystemStatus.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -172,6 +189,33 @@ class VideoService(object):
             '/vda.VideoService/Chat',
             vda__pb2.ChatRequest.SerializeToString,
             vda__pb2.ChatResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def GetSystemStatus(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/vda.VideoService/GetSystemStatus',
+            vda__pb2.Empty.SerializeToString,
+            vda__pb2.SystemStatus.FromString,
             options,
             channel_credentials,
             insecure,

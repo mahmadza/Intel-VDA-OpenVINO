@@ -6,6 +6,7 @@ service VideoService {
   rpc Ping (Empty) returns (Pong);
   rpc ProcessVideo (VideoRequest) returns (stream ProgressUpdate); 
   rpc Chat (ChatRequest) returns (ChatResponse);
+  rpc GetSystemStatus (Empty) returns (SystemStatus); // <--- New Call
 }
 
 message VideoRequest { 
@@ -44,4 +45,10 @@ message ChatRequest {
 
 message ChatResponse {
   string reply = 1;
+}
+
+message SystemStatus {
+  bool is_ready = 1;
+  bool models_found = 2;
+  string message = 3;
 }

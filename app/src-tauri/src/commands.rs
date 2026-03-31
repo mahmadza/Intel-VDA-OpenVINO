@@ -5,7 +5,7 @@ use std::sync::Mutex;
 use serde::Serialize;
 
 use crate::vda::video_service_client::VideoServiceClient;
-use crate::vda::{VideoRequest, ChatRequest, AnalysisResult};
+use crate::vda::{Empty, VideoRequest, ChatRequest, AnalysisResult};
 
 #[derive(Serialize, Clone)]
 pub struct ProgressPayload {
@@ -212,4 +212,27 @@ pub async fn get_chat_history(
       .collect();
 
     Ok(history)
+}
+
+#[tauri::command]
+pub async fn check_engine_status() -> Result<String, String> {
+    // 1. Connect to the Python sidecar/backend
+    let mut client = VideoServiceClient::connect("http://127.0.0.1:50051")
+        .await
+        .map_err(|e| format!("Connection failed: {}", e))?;
+
+    // 2. Call the health check using the imported Empty struct
+    let request = tonic::Request::new(Empty {});
+    let response = client.get_system_status(request)
+        .await
+        .map_err(|e| format!("gRPC status error: {}", e))?;
+
+    let status = response.into_inner();
+
+    // 3. Logic check for models
+    if !status.models_found {
+        return Ok(format!("MODELS_MISSING: {}", status.message));
+    }
+    
+    Ok("READY".to_string())
 }

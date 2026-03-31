@@ -1,4 +1,3 @@
-import os
 from utils.video_processor import VideoProcessor
 from agents.transcription_agent import TranscriptionAgent
 from agents.vision_agent import VisionAgent
@@ -9,7 +8,7 @@ class VideoOrchestrator:
     def __init__(self, db_path=None):
         print("--- 🧠 Initializing AI Orchestrator ---")
         self.processor = VideoProcessor()
-        self.transcriber = TranscriptionAgent(model_id="openai/whisper-tiny")
+        self.transcriber = TranscriptionAgent()
         self.vision = VisionAgent()
         self.generator = GenerationAgent()
         
@@ -45,7 +44,6 @@ class VideoOrchestrator:
             progress = 0.5 + (i / sample_size) * 0.4 
             yield f"STEP 3/4: Processing visual frame {i+1} of {sample_size}...", progress
 
-        yield "STEP 4/4: Finalizing intelligence report...", 0.9
         yield "Analysis Complete!", 1.0
 
     def generate_report(self, report_type="pdf"):

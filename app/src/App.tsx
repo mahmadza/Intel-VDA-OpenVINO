@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { ask } from '@tauri-apps/plugin-dialog';
-import { openPath } from '@tauri-apps/plugin-opener';
 import "./App.css";
 
 function App() {
@@ -20,7 +19,7 @@ function App() {
   };
 
   useEffect(() => {
-    loadHistory(); // Load existing history
+    loadHistory();
 
     const unlisten = listen("pipeline-progress", (event: any) => {
       setStatus(event.payload.status);
@@ -35,7 +34,33 @@ function App() {
     return () => { unlisten.then((f) => f()); };
   }, []);
 
-  useEffect(scrollToBottom, [messages]);  
+  useEffect(scrollToBottom, [messages]);
+
+  useEffect(() => {
+    const checkHealth = async () => {
+      // Only poll if we aren't currently in the middle of a video analysis
+      if (progress > 0 && progress < 100) return;
+
+      try {
+        const engineStatus = await invoke<string>("check_engine_status");
+        
+        if (engineStatus === "READY") {
+          setStatus("Ready");
+        } else if (engineStatus.startsWith("MODELS_MISSING")) {
+          setStatus("Missing Models");
+        }
+      } catch (err) {
+        // If the invoke fails (e.g., Python server isn't running)
+        setStatus("Offline");
+      }
+    };
+
+    // Check every 5 seconds
+    const interval = setInterval(checkHealth, 5000);
+    checkHealth(); // Run once immediately on mount
+
+    return () => clearInterval(interval);
+  }, [progress]); // Re-run if progress changes to ensure we resume polling when done
 
   const loadHistory = async () => {
     try {
@@ -72,21 +97,21 @@ function App() {
     try {
       const path = await invoke<string>("select_video_file");
       
-      // 1. CLEAR the active video to force the UI back to the "Welcome/Loading" screen
+      // Clear the active video to force the UI back to the "Welcome/Loading" screen
       setActiveVideoId(null);
       setMessages([]);
       
-      // 2. Reset progress and status
+      // Reset progress and status
       setStatus("Starting analysis...");
       setProgress(0); 
       
-      // 3. Run the pipeline (this will emit 'pipeline-progress' events)
+      // Run the pipeline (this will emit 'pipeline-progress' events)
       await invoke("run_vda_pipeline", { path });
       
       setStatus("Analysis Complete");
       const updatedHistory = await loadHistory();
       
-      // 4. Once finished, automatically jump to the new video
+      // Once finished, automatically jump to the new video
       if (updatedHistory && updatedHistory.length > 0) {
         handleSelectVideo(updatedHistory[0].id);
       }
@@ -113,9 +138,6 @@ function App() {
         message: currentInput 
       });
 
-      console.log("📩 UI: Received AI response");
-
-      // Handle File Generation or regular reply
       if (aiReply.startsWith("SUCCESS_FILE: ")) {
         const filePath = aiReply.replace("SUCCESS_FILE: ", "").trim();
         setMessages(prev => [...prev, { 
@@ -127,7 +149,6 @@ function App() {
       }
 
     } catch (err) {
-      console.error("❌ UI: Chat Invoke Error:", err);
       setMessages(prev => [...prev, { role: "assistant", content: `System Error: ${err}` }]);
     } finally {
       console.log("✅ UI: Setting isChatting to FALSE");
@@ -184,7 +205,7 @@ function App() {
               key={v.id} 
               className={`history-item ${activeVideoId === v.id ? 'active' : ''}`} 
               onClick={() => handleSelectVideo(v.id)}
-              title={v.file_name} // Show full name on hover as a tooltip
+              title={v.file_name}
             >
               <span>{v.file_name}</span>
               <button 
@@ -196,6 +217,11 @@ function App() {
             </div>
           ))}
         </div>
+
+        <div className="system-status">
+          <div className={`status-dot ${status === "Ready" ? "online" : "busy"}`}></div>
+          <span>AI Engine: {status}</span>
+        </div>
       </aside>
 
       <main className="main-content">
@@ -206,6 +232,7 @@ function App() {
             <span style={{ fontSize: '0.8rem', color: '#666' }}>{Math.round(progress)}% Complete</span>
           </div>
         )}
+
         {activeVideoId ? (
           <div className="intelligence-view">
             <div className="chat-container">
@@ -231,8 +258,7 @@ function App() {
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder={isChatting ? "AI is thinking..." : "Search video content..."}
                 />
-                <button onClick={handleSendMessage} disabled={isChatting || !chatInput}
-                >
+                <button onClick={handleSendMessage} disabled={isChatting || !chatInput}>
                   {isChatting ? "..." : "Ask AI"}
                 </button>
               </div>
@@ -240,8 +266,55 @@ function App() {
           </div>
         ) : (
           <div className="welcome-screen">
-            <h2>{progress > 0 && progress < 100 ? "" : "Select a video to begin"}</h2>
-            {status === "Ready" && <p>Upload an .mp4 to start local analysis.</p>}
+            {progress > 0 && progress < 100 ? (
+              <div className="processing-hero">
+                <h2>AI is Analyzing Video Intelligence...</h2>
+                <p>Please wait while OpenVINO processes the audio and visual streams.</p>
+              </div>
+            ) : (
+              <div className="hero-content">
+                <div className="hero-header">
+                  <h1>Intel VDA</h1>
+                  <p className="subtitle">Local-First Video Data Analytics Orchestrator</p>
+                </div>
+                
+                <div className="feature-grid">
+                  <div className="feature-card">
+                    <div className="icon">🔒</div>
+                    <h3>Privacy First</h3>
+                    <p>Frames and transcripts never leave your local OpenVINO runtime.</p>
+                  </div>
+                  <div className="feature-card">
+                    <div className="icon">⚡</div>
+                    <h3>INT4 Optimized</h3>
+                    <p>Leveraging Intel hardware with quantized INT4 precision for low latency.</p>
+                  </div>
+                  <div className="feature-card">
+                    <div className="icon">📂</div>
+                    <h3>Multi-Agent</h3>
+                    <p>Integrated Whisper (Audio) and SmolVLM2 (Vision) intelligence.</p>
+                  </div>
+                </div>
+
+                <div className="getting-started">
+                  <h3>Quick Start Guide</h3>
+                  <div className="steps">
+                    <div className="step">
+                      <span className="step-num">1</span>
+                      <p>Check the <strong>AI Engine status</strong> in the sidebar (should be Green).</p>
+                    </div>
+                    <div className="step">
+                      <span className="step-num">2</span>
+                      <p>Click <strong>+ New Video</strong> to upload and analyze an MP4 file.</p>
+                    </div>
+                    <div className="step">
+                      <span className="step-num">3</span>
+                      <p>Ask the <strong>Forensic Analyst</strong> about specific events, objects, or audio content.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
