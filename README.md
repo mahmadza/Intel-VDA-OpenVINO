@@ -113,12 +113,29 @@ python server.py --db_path "/paste/the/rust/db/path/here/vda_intelligence.db"
 *(💡 Note: When the process in Terminal 3 finished after about 5 minutes, the frontend UI will automatically detect the AI Engine and switch its status indicator to "Ready" Green.)*
 
 
-Alternatively, you could also use C# to launch the AI Orchestrator:
-
+Alternatively, you could also use C# to launch the AI Orchestrator.
+Compile the launcher for your specific architecture:
 ```bash
-# Use the C# Launcher to bootstrap the AI engine with the correct DB path
-./launcher/bin/Release/net10.0/osx-arm64/publish/launcher "[PATH_FROM_TAURI]"
+# Navigate to the launcher directory
+cd launcher
+
+# Initialize the project
+dotnet new console --force 
+
+# Build the self-contained binary for your OS
+# For macOS (Apple Silicon):
+dotnet publish -c Release -r osx-arm64 --self-contained
+
+# For Windows:
+dotnet publish -c Release -r win-x64 --self-contained
 ```
+The binary will be generated in launcher/bin/Release/net10.0/[ARCH]/publish/launcher.
+
+Finally, use the use the C# Launcher to bootstrap the AI engine with the correct DB path:
+```bash
+./launcher/bin/Release/net10.0/[ARCH]/publish/launcher "[PATH_FROM_TAURI]"
+```
+Once you see the Terminal says "🚀 gRPC Server running on 127.0.0.1:50051", that means the backend is ready.
 
 -----
 
@@ -136,15 +153,18 @@ Once the UI is running, click **"+ New Video"** and select a short `.mp4` file (
 
 To understand the engineering decisions, trade-offs, and architecture of this application, please review the following documents:
 
-1. [Assessment Summary: Challenges, Constraints & Future Improvements](docs/ASSESSMENT_SUMMARY.md) *(Required reading per assessment rubric)*
-2. [Full Architecture & Data Flow](docs/architecture/architecture.md)
-3. [Model Registry & OpenVINO Optimization](docs/models/models-registry.md)
+1. [Assessment Summary: Challenges & Strategic Pivots](docs/ASSESSMENT_SUMMARY.md) *(Required reading per rubric)*
+2. [Environment Manifest: Hardware & Dependency Specs](docs/environment-manifest.md)
+3. [Full Architecture & Data Flow](docs/architecture/architecture.md)
+4. [Model Registry & OpenVINO Optimization](docs/models-registry.md)
+5. [Sidecar Packaging Report (Why we chose Conda)](docs/sidecar-attempt.md)
 
 ### Architecture Decision Records (ADRs)
-* [ADR-001: VLM Model Selection (SmolVLM2 vs Moondream2)](docs/adr/001-vlm-model-selection.md)
-* [ADR-003: Data Persistence Strategy (SQLite with WAL Mode)](docs/adr/003-data-persistence-sqlite-wal.md)
-* [ADR-004: Agentic Orchestration and Semantic Routing](docs/adr/004-agentic-orchestration-intent-detection.md)
-* [ADR-006: Decoupled MCP Architecture via Server-Sent Events](docs/adr/006-mcp-sse-microservice.md)
+* [ADR-001: VLM Model Selection](docs/adr/001-vlm-model-selection.md)
+* [ADR-002: Command Isolation in Tauri](docs/adr/002-command-isolation.md)
+* [ADR-003: Data Persistence (SQLite WAL)](docs/adr/003-data-persistence-sqlite-wal.md)
+* [ADR-004: Agentic Orchestration & Routing](docs/adr/004-agentic-orchestration-intent-detection.md)
+* [ADR-006: Decoupled MCP via SSE](docs/adr/006-mcp-sse-microservice.md)
 
 -----
 

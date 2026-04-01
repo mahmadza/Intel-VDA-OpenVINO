@@ -12,6 +12,9 @@ This registry tracks the versions, architectures, and optimization parameters fo
 | **Whisper-Tiny** | Speech-to-Text | Transformer (Encoder-only) | FP16 | ~150 MB |
 | **SmolVLM2-256M** | Vision-Language | Transformer (Multimodal) | INT4 | ~190 MB |
 
+
+*Note: These models are optimized for **OpenVINO 2026.0**. While they run performantly on Apple Silicon via CPU, they are specifically architected to leverage **Intel NPU** and **Arc Graphics** via the OpenVINO runtime for sub-second visual intelligence on Intel-powered workstations.*
+
 ---
 
 ## 1. Orchestration Agent: Phi-3-Mini-4K
@@ -61,11 +64,18 @@ The Vision Agent analyzes sampled video keyframes to provide descriptive context
 To manually re-export or quantize these models for the registry outside of the automated `download_models.py` script, use the following CLI commands within the `intel-VDA-env` conda environment:
 
 ```bash
-# Export Whisper to OpenVINO (FP16)
-optimum-cli export openvino --model openai/whisper-tiny whisper_ov_model/
+# Ensure you are in the root of the /backend directory
+cd backend
 
-# Export and Quantize SmolVLM2 (INT4)
-optimum-cli export openvino --model HuggingFaceTB/SmolVLM2-256M-Instruct --weight-format int4 smol_ov_model/
+# 1. Export Whisper to OpenVINO (FP16)
+# We keep FP16 to maintain high transcription accuracy on technical terms
+optimum-cli export openvino --model openai/whisper-tiny models/whisper/
 
-# Download pre-quantized Phi-3 OpenVINO IR
-huggingface-cli download OpenVINO/phi-3-mini-4k-instruct-int4-ov --local-dir phi3_ov_model/
+# 2. Export and Quantize SmolVLM2 (INT4)
+# Utilizing NNCF weight compression for low-latency visual intelligence
+optimum-cli export openvino --model HuggingFaceTB/SmolVLM2-256M-Instruct --weight-format int4 models/vision/
+
+# 3. Pull Pre-optimized Phi-3 (INT4)
+# Leveraging Intel's official optimized build for the routing engine
+huggingface-cli download OpenVINO/phi-3-mini-4k-instruct-int4-ov --local-dir models/llm/
+```
