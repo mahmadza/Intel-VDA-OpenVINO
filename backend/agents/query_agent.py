@@ -1,4 +1,3 @@
-# backend/agents/query_agent.py
 import openvino_genai as ov_genai
 import sqlite3
 import os
@@ -33,7 +32,6 @@ class QueryAgent:
             
             context_parts = []
             
-            # 🔥 FIX: Use extremely explicit labels so the LLM knows this is the audio/dialogue
             if main_data:
                 transcript = main_data[0] if main_data[0] and main_data[0].strip() else "[No speech detected in video]"
                 context_parts.append(f"AUDIO TRANSCRIPT (What was spoken in the video):\n{transcript}")
@@ -70,7 +68,7 @@ class QueryAgent:
 
     async def _call_mcp_tool(self, tool_name, arguments):
         """Standardized MCP Client connecting over SSE to avoid gRPC fork clashes."""
-        url = "http://127.0.0.1:8000/sse" # <-- Update to 8000
+        url = "http://127.0.0.1:8000/sse"
         try:
             async with sse_client(url) as streams:
                 async with ClientSession(streams[0], streams[1]) as session:
@@ -85,13 +83,11 @@ class QueryAgent:
         context = self._get_video_context(video_id)
         chat_history = self._get_chat_history(video_id)
 
-        # DEBUG: Let's see exactly what the LLM is reading
-        print(f"🔍 DEBUG: Context length loaded: {len(context)} chars")
         if len(context) < 10:
             print("⚠️ WARNING: Context is virtually empty! Did the Vision/Audio agents extract data?")
             context = "[NO VISUAL OR AUDIO DATA FOUND FOR THIS VIDEO]"
 
-        # 1. Semantic Router (Intent Classification)
+        # Semantic Router (Intent Classification)
         router_prompt = f"""<|system|>
         You are an AI router. Classify the user's query into ONE of these exact categories:
         - GENERATE_PDF: User asked for a PDF report or summary document.
@@ -108,7 +104,7 @@ class QueryAgent:
         intent = self.pipe.generate(router_prompt, max_new_tokens=10).strip().upper()
         print(f"🧭 Router classified intent as: {intent}")
 
-        # 2. Agentic Execution
+        # Agentic Execution
         if "GENERATE_PDF" in intent:
             report_text = f"ANALYSIS:\n{context}\n\nCHAT HISTORY:\n{chat_history}"
             return asyncio.run(self._call_mcp_tool("generate_pdf_report", {"content": report_text}))
@@ -119,7 +115,7 @@ class QueryAgent:
         elif "AMBIGUOUS" in intent:
             return "I'm not exactly sure what you're referring to. Could you provide a bit more detail about what you're looking for?"
 
-        # 3. Fallback to Standard RAG with HARDENED PROMPT
+        # Fallback to Standard RAG
         prompt = f"""<|system|>
         You are an AI Video Analyst. Answer the user's question using ONLY the provided ANALYSIS NOTES. 
         The notes contain the audio TRANSCRIPT and VISUAL OBSERVATIONS from the video.

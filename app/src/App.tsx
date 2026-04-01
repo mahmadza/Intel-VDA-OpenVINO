@@ -105,7 +105,6 @@ function App() {
       setStatus("Starting analysis...");
       setProgress(0); 
       
-      // Run the pipeline (this will emit 'pipeline-progress' events)
       await invoke("run_vda_pipeline", { path });
       
       setStatus("Analysis Complete");

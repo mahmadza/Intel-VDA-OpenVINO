@@ -20,7 +20,7 @@ class TranscriptionAgent:
         self.model = OVModelForSpeechSeq2Seq.from_pretrained(
             str(model_path), 
             device="CPU",
-            export=should_export, # 👈 True only if .xml is missing
+            export=should_export,
             local_files_only=True,
             compile=True
         )

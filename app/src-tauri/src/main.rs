@@ -22,7 +22,6 @@ fn main() {
             let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
             
             // Enable WAL mode (Write-Ahead Logging) 
-            // This is CRITICAL for when both Rust and Python are touching the DB.
             conn.execute("PRAGMA journal_mode=WAL;", []).ok();
 
             conn.execute_batch("

@@ -17,7 +17,6 @@ def download_single_model(name, repo_id, base_path):
             repo_id=repo_id, 
             local_dir=target_dir,
             local_dir_use_symlinks=False,
-            # This allows the library to parallelize individual file downloads within the repo
             max_workers=8 
         )
         print(f"✅ [DONE] {name} is ready in {target_dir}")
@@ -34,7 +33,6 @@ def download_all_parallel():
     print("🚀 Intel VDA: Parallel Model Bootstrap Starting...")
     print(f"📦 Target Directory: {base_path}\n" + "-"*40)
 
-    # Use ThreadPoolExecutor to run downloads in parallel
     with concurrent.futures.ThreadPoolExecutor(max_workers=len(MODELS)) as executor:
         # Create a dictionary to track the futures
         future_to_model = {

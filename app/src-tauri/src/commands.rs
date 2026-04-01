@@ -75,11 +75,11 @@ pub async fn run_vda_pipeline(
 
 #[tauri::command]
 pub async fn send_chat_message(
-    db_state: tauri::State<'_, DbState>, // Add DB state access
+    db_state: tauri::State<'_, DbState>,
     video_id: i64,
     message: String,
 ) -> Result<String, String> {
-    // 1. Save User Message to DB
+    // Save User Message to DB
     {
         let conn = db_state.0.lock().unwrap();
         conn.execute(
@@ -88,7 +88,7 @@ pub async fn send_chat_message(
         ).map_err(|e| e.to_string())?;
     }
 
-    // 2. Call gRPC Backend
+    // Call gRPC Backend
     let mut client = VideoServiceClient::connect("http://127.0.0.1:50051")
         .await
         .map_err(|e| format!("Connection error: {}", e))?;
@@ -99,7 +99,7 @@ pub async fn send_chat_message(
 
     let ai_reply = response.into_inner().reply;
 
-    // 3. Save Assistant Message to DB
+    // Save Assistant Message to DB
     {
         let conn = db_state.0.lock().unwrap();
         conn.execute(
@@ -216,12 +216,12 @@ pub async fn get_chat_history(
 
 #[tauri::command]
 pub async fn check_engine_status() -> Result<String, String> {
-    // 1. Connect to the Python sidecar/backend
+
     let mut client = VideoServiceClient::connect("http://127.0.0.1:50051")
         .await
         .map_err(|e| format!("Connection failed: {}", e))?;
 
-    // 2. Call the health check using the imported Empty struct
+    // Call the health check
     let request = tonic::Request::new(Empty {});
     let response = client.get_system_status(request)
         .await
@@ -229,7 +229,7 @@ pub async fn check_engine_status() -> Result<String, String> {
 
     let status = response.into_inner();
 
-    // 3. Logic check for models
+    // Logic check for models
     if !status.models_found {
         return Ok(format!("MODELS_MISSING: {}", status.message));
     }

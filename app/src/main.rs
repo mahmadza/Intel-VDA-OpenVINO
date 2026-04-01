@@ -10,7 +10,6 @@ use vda::Empty;
 
 #[tauri::command]
 async fn ping_backend() -> Result<String, String> {
-    // Note: Use 127.0.0.1 instead of [::1] for better cross-platform compatibility
     let mut client = VideoServiceClient::connect("http://127.0.0.1:50051")
         .await
         .map_err(|e| e.to_string())?;

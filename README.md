@@ -65,7 +65,6 @@ Create a dedicated native environment to ensure OpenVINO links correctly to your
 # Clone the repository and navigate to the root directory
 conda create -n intel-VDA-env python=3.10 -y
 conda activate intel-VDA-env
-cd intel-VDA-OpenVINO
 
 # Install required ML and backend dependencies
 pip install -r backend/requirements.txt
@@ -122,7 +121,6 @@ Once the UI is running, click **"+ New Video"** and select a short `.mp4` file (
 1.  **Test RAG & Cross-Modal Synthesis:** *"What objects are shown in the video, and what is being said?"*
 2.  **Test MCP Integration:** *"Summarize our discussion so far and generate a PDF."* (Watch Terminal 1 intercept the tool call).
 3.  **Test Human-in-the-Loop (HITL):** *"Tell me more about it."* (The router will flag this as ambiguous and ask for clarification).
-4.  **Test Negative Constraints:** *"Who is the CEO of Intel?"* (The AI will refuse to hallucinate outside the video context).
 
 -----
 

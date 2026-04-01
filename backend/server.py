@@ -10,7 +10,7 @@ class VideoService(vda_pb2_grpc.VideoServiceServicer):
     def __init__(self, db_path):
 
         if db_path is None:
-            # Fallback that actually works on any Mac/Linux
+            # Fallback that works on any Mac, but can be overridden by CLI arg
             db_path = os.path.expanduser("~/Library/Application Support/com.intel.vda/vda_intelligence.db")
         
         print(f"--- 💾 Backend DB Path: {db_path} ---")
@@ -84,11 +84,9 @@ def serve():
     parser.add_argument("--db_path", type=str, required=True, help="Path to SQLite DB")
     args = parser.parse_args()
 
-    # 🔥 FIX: Expand the tilde (~) into an absolute path so SQLite can find it
     absolute_db_path = os.path.expanduser(args.db_path)
 
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    # Pass the expanded path to the VideoService
     vda_pb2_grpc.add_VideoServiceServicer_to_server(VideoService(absolute_db_path), server)
     server.add_insecure_port('127.0.0.1:50051')
     print("🚀 gRPC Server running on 127.0.0.1:50051")
