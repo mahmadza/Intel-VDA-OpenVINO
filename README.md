@@ -89,7 +89,16 @@ cd app
 npm install
 npm run tauri dev
 ```
-*🛑 Pause and look at the terminal output. Copy the absolute path printed next to `🦀 Rust DB Path:` (e.g., `/Users/.../vda_intelligence.db` or `C:\Users\...`). You will need this for Terminal 3.*
+
+> ### 🛑 **CRITICAL ACTION REQUIRED**
+> Before proceeding to **Terminal 3**, look at the output of **Terminal 1**.
+> 
+> **Copy the absolute path** printed next to the message `🦀 Rust DB Path:`
+> 
+> *Example:* `/Users/name/Library/Application Support/com.intel.vda/vda_intelligence.db`
+>
+> You will need to paste this path when starting the **AI Orchestrator** to bridge the Frontend and Backend intelligence.
+
 
 **Terminal 2: Start the MCP Server (Generation Tools)**
 Leave Terminal 1 running, open a new terminal tab, and start the isolated MCP tool server.

@@ -267,7 +267,7 @@ function App() {
           <div className="welcome-screen">
             {progress > 0 && progress < 100 ? (
               <div className="processing-hero">
-                <h2>AI is Analyzing Video Intelligence...</h2>
+                <h2>Analyzing the video...</h2>
                 <p>Please wait while OpenVINO processes the audio and visual streams.</p>
               </div>
             ) : (
