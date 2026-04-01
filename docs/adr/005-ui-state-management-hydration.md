@@ -1,4 +1,4 @@
-## ADR-006: UI State Management and Hydration
+## ADR-005: UI State Management and Hydration
 
 ### Status
 Accepted

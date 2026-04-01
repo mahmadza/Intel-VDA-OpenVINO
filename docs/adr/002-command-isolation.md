@@ -1,4 +1,4 @@
-## ADR-003: Command Isolation in Tauri v2
+## ADR-002: Command Isolation in Tauri v2
 
 ### Status
 Accepted

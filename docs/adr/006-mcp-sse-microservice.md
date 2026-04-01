@@ -1,4 +1,4 @@
-## ADR-007: Decoupled MCP Architecture via Server-Sent Events (SSE)
+## ADR-006: Decoupled MCP Architecture via Server-Sent Events (SSE)
 
 ### Status
 Accepted

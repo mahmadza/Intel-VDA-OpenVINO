@@ -205,3 +205,15 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# C# Build Artifacts
+launcher/bin/
+launcher/obj/
+# Database
+*.db
+*.db-wal
+*.db-shm
+# Python
+backend/temp/
+__pycache__/

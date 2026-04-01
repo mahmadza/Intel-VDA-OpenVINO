@@ -1,4 +1,4 @@
-## ADR-004: Data Persistence Strategy (SQLite with WAL Mode)
+## ADR-003: Data Persistence Strategy (SQLite with WAL Mode)
 
 ### Status
 Accepted

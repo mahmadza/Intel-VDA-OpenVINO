@@ -15,7 +15,7 @@ This document outlines the specific hardware, software, and networking configura
 ### 🐍 Python Backend Environment (The Microservices)
 We utilize **Miniforge** (conda-forge) on macOS to ensure all binary dependencies are compiled natively for ARM64, avoiding the performance degradation of Rosetta 2.
 
-* **Environment Name:** `vda_native`
+* **Environment Name:** `intel-VDA-env`
 * **Python Version:** `3.10.x`
 
 | Dependency | Version | Purpose |

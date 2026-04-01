@@ -1,4 +1,4 @@
-## ADR-005: Agentic Orchestration and Intent Detection
+## ADR-004: Agentic Orchestration and Intent Detection
 
 ### Status
 Accepted

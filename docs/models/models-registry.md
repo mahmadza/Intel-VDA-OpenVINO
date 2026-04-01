@@ -58,7 +58,7 @@ The Vision Agent analyzes sampled video keyframes to provide descriptive context
 
 ## Reproduction & Export Commands
 
-To manually re-export or quantize these models for the registry outside of the automated `download_models.py` script, use the following CLI commands within the `vda_native` conda environment:
+To manually re-export or quantize these models for the registry outside of the automated `download_models.py` script, use the following CLI commands within the `intel-VDA-env` conda environment:
 
 ```bash
 # Export Whisper to OpenVINO (FP16)

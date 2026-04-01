@@ -55,7 +55,7 @@ graph TD
   * **Conda** (Miniconda or Anaconda)
   * **Node.js** (v18+)
   * **Rust** (Latest stable)
-  * **FFmpeg** (Required for audio extraction: `brew install ffmpeg`)
+  * **FFmpeg** (Required for audio extraction. Please install it via `brew install ffmpeg` or `sudo apt install ffmpeg`)
 
 ### 2\. Environment Setup
 
@@ -112,6 +112,14 @@ python server.py --db_path "/paste/the/rust/db/path/here/vda_intelligence.db"
 ```
 *(💡 Note: When the process in Terminal 3 finished after about 5 minutes, the frontend UI will automatically detect the AI Engine and switch its status indicator to "Ready" Green.)*
 
+
+Alternatively, you could also use C# to launch the AI Orchestrator:
+
+```bash
+# Use the C# Launcher to bootstrap the AI engine with the correct DB path
+./launcher/bin/Release/net10.0/osx-arm64/publish/launcher "[PATH_FROM_TAURI]"
+```
+
 -----
 
 ## 🧪 Testing the Capabilities
@@ -134,9 +142,9 @@ To understand the engineering decisions, trade-offs, and architecture of this ap
 
 ### Architecture Decision Records (ADRs)
 * [ADR-001: VLM Model Selection (SmolVLM2 vs Moondream2)](docs/adr/001-vlm-model-selection.md)
-* [ADR-004: Data Persistence Strategy (SQLite with WAL Mode)](docs/adr/004-data-persistence-sqlite-wal.md)
-* [ADR-005: Agentic Orchestration and Semantic Routing](docs/adr/005-agentic-orchestration-intent-detection.md)
-* [ADR-007: Decoupled MCP Architecture via Server-Sent Events](docs/adr/007-mcp-sse-microservice.md)
+* [ADR-003: Data Persistence Strategy (SQLite with WAL Mode)](docs/adr/003-data-persistence-sqlite-wal.md)
+* [ADR-004: Agentic Orchestration and Semantic Routing](docs/adr/004-agentic-orchestration-intent-detection.md)
+* [ADR-006: Decoupled MCP Architecture via Server-Sent Events](docs/adr/006-mcp-sse-microservice.md)
 
 -----
 
