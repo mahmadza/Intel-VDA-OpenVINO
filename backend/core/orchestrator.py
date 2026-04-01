@@ -22,24 +22,29 @@ class VideoOrchestrator:
         return self.query_agent.chat(video_id, message)
     
     def process_new_video(self, video_path):
-        """
-        Runs the full pipeline with status updates
-        """
         yield "STEP 1/4: Extracting audio and keyframes...", 0.1
         audio_path, frames = self.processor.process_video(video_path)
 
         yield "STEP 2/4: Transcribing speech (OpenVINO)...", 0.3
         self.current_transcript = self.transcriber.transcribe(audio_path)
+        
+        # 🐛 DEBUG PRINT: Let's see what Whisper heard
+        print(f"\n🎙️ AUDIO EXTRACTED: '{self.current_transcript}'\n")
 
         yield "STEP 3/4: Analyzing visual intelligence...", 0.5
         self.current_descriptions = []
         
-        # Fix to 12 frames for ~1 minute video
         sample_size = min(12, len(frames)) 
         
         for i in range(sample_size):
-            desc = self.vision.analyze_frame(frames[i], prompt="What objects or graphs are visible?")
-            self.current_descriptions.append(desc)
+            # 🔥 FIX: Simpler prompt. Let it describe what it sees without giving it a "way out".
+            simple_prompt = "Describe the main objects and actions in this image concisely."
+            desc = self.vision.analyze_frame(frames[i], prompt=simple_prompt)
+            
+            # 🐛 DEBUG PRINT: Let's see what SmolVLM saw
+            print(f"👁️ VISION EXTRACTED (Frame {i}): {desc}")
+            
+            self.current_descriptions.append(f"Frame {i}: {desc}")
             
             progress = 0.5 + (i / sample_size) * 0.4 
             yield f"STEP 3/4: Processing visual frame {i+1} of {sample_size}...", progress

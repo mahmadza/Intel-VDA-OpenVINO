@@ -84,8 +84,12 @@ def serve():
     parser.add_argument("--db_path", type=str, required=True, help="Path to SQLite DB")
     args = parser.parse_args()
 
+    # 🔥 FIX: Expand the tilde (~) into an absolute path so SQLite can find it
+    absolute_db_path = os.path.expanduser(args.db_path)
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    vda_pb2_grpc.add_VideoServiceServicer_to_server(VideoService(args.db_path), server)
+    # Pass the expanded path to the VideoService
+    vda_pb2_grpc.add_VideoServiceServicer_to_server(VideoService(absolute_db_path), server)
     server.add_insecure_port('127.0.0.1:50051')
     print("🚀 gRPC Server running on 127.0.0.1:50051")
     server.start()
