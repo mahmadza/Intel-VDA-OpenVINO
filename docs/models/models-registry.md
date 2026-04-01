@@ -1,6 +1,6 @@
 # Model Registry: Intel VDA
 
-This registry tracks the versions, architectures, and optimization parameters for the models used in the pipeline. All models are optimized for the **OpenVINO 2026.0** runtime.
+This registry tracks the versions, architectures, and optimization parameters for the models used in the local pipeline. All models are explicitly optimized for the **OpenVINO** runtime to ensure maximum performance across Intel and Apple Silicon hardware.
 
 ---
 
@@ -8,50 +8,64 @@ This registry tracks the versions, architectures, and optimization parameters fo
 
 | Model ID | Task | Base Architecture | Precision | Size (Optimized) |
 | :--- | :--- | :--- | :--- | :--- |
-| **Whisper-Base** | Speech-to-Text | Transformer (Encoder-only) | FP16 | ~150 MB |
-| **SmolVLM2-256M** | Vision-Language | Transformer (Multimodal) | INT4 (NNCF) | ~190 MB |
+| **Phi-3-Mini-4K-Instruct** | Semantic Routing & RAG | Transformer (LLM) | INT4 | ~2.3 GB |
+| **Whisper-Tiny** | Speech-to-Text | Transformer (Encoder-only) | FP16 | ~150 MB |
+| **SmolVLM2-256M** | Vision-Language | Transformer (Multimodal) | INT4 | ~190 MB |
 
 ---
 
-## Audio Agent: Whisper-Base
+## 1. Orchestration Agent: Phi-3-Mini-4K
 
-The Audio Agent is responsible for transcribing video dialogue and timestamps into structured text.
+The Orchestration Agent acts as the "brain" of the application. It evaluates user inputs for zero-shot intent classification (Semantic Routing), manages Human-in-the-Loop (HITL) ambiguity prompts, and synthesizes final answers from the SQLite RAG context.
 
-* **Model Source:** OpenAI / HuggingFace (`openai/whisper-base`)
-* **Optimization Strategy:** Exported to OpenVINO Intermediate Representation (IR) via `optimum-intel`.
-* **Precision:** **FP16**. I chose FP16 over INT8 to maintain high word error rate (WER) performance on technical terminology while still utilizing the Apple Silicon GPU/NPU effectively.
-* **Performance Note:** Capable of transcribing a 5-minute video in under 30 seconds on M-Series hardware.
+* **Model Source:** Microsoft / OpenVINO (`OpenVINO/phi-3-mini-4k-instruct-int4-ov`)
+* **Optimization Strategy:** Pre-quantized to 4-bit integer precision by the OpenVINO team.
+* **Precision:** **INT4**. 
+* **Reasoning for Choice:** Phi-3 punches massively above its weight class. At INT4, it fits comfortably in consumer RAM while maintaining the strict instruction-following capabilities required to accurately route intents (e.g., `GENERATE_PDF` vs `RAG_QUERY`) without falling into infinite hallucination loops.
 
 ---
 
-## Vision Agent: SmolVLM2-256M
+## 2. Audio Agent: Whisper-Tiny
 
-The Vision Agent analyzes sampled video frames to provide descriptive context (e.g., "A person is presenting a slide about quarterly earnings").
+The Audio Agent is responsible for transcribing video dialogue into structured text prior to LLM evaluation.
+
+* **Model Source:** OpenAI / HuggingFace (`openai/whisper-tiny`)
+* **Optimization Strategy:** Exported dynamically to OpenVINO Intermediate Representation (IR) via `optimum-intel` on first launch.
+* **Precision:** **FP16**. I chose FP16 over INT8 to maintain high word error rate (WER) performance on technical terminology while still keeping the memory footprint nearly invisible.
+
+---
+
+## 3. Vision Agent: SmolVLM2-256M
+
+The Vision Agent analyzes sampled video keyframes to provide descriptive context (e.g., "A cat sitting in a futuristic laboratory") to the SQLite database.
 
 * **Model Source:** HuggingFace (`HuggingFaceTB/SmolVLM2-256M-Instruct`)
-* **Optimization Strategy:** Quantized using the **Neural Network Compression Framework (NNCF)**.
-* **Precision:** **INT4**. Weight-only quantization was applied to the language model head and vision encoder to fit within the 256MB-512MB RAM budget, preventing memory swaps during concurrent audio/vision processing.
-* **Reasoning for Choice:** Replaced Moondream2 due to superior native OpenVINO graph compatibility and lower latency on ARM64 unified memory.
+* **Optimization Strategy:** Exported to OpenVINO IR. 
+* **Precision:** **INT4** (via NNCF Weight Compression).
+* **Reasoning for Choice:** Replaced Moondream2 due to superior native OpenVINO graph compatibility and drastically lower latency. By quantizing the vision encoder and LLM head to INT4, it prevents memory swap thrashing when running concurrently with the Whisper and Phi-3 models.
 
 ---
 
-## Hardware Mapping
+## Hardware Mapping & Execution
 
 | Model | Primary Compute Device | Rationale |
 | :--- | :--- | :--- |
-| **Whisper** | NPU / GPU | Parallelizable transformer blocks; low latency requirements. |
-| **SmolVLM2** | CPU / GPU | High memory bandwidth requirement; benefits from unified memory access. |
+| **Phi-3-Mini** | CPU / GPU | High memory bandwidth requirement; benefits from unified memory access for fast token generation. |
+| **Whisper** | NPU / CPU | Parallelizable transformer blocks; highly efficient on low-power neural engines. |
+| **SmolVLM2** | CPU | Small enough to run entirely in L3 cache on modern processors, freeing up the GPU/NPU for the LLM router. |
 
 ---
 
-## Reproduction & Export
+## Reproduction & Export Commands
 
-To re-export these models for the registry, use the following CLI commands within the `vda_native` environment:
+To manually re-export or quantize these models for the registry outside of the automated `download_models.py` script, use the following CLI commands within the `vda_native` conda environment:
 
 ```bash
-# Export Whisper to OpenVINO
-optimum-cli export openvino --model openai/whisper-base whisper_ov_model/
+# Export Whisper to OpenVINO (FP16)
+optimum-cli export openvino --model openai/whisper-tiny whisper_ov_model/
 
-# Quantize SmolVLM2 to INT4
-nncf_quantize --model smolvlm2_path --precision int4 --output_dir smol_ov_model/
-```
+# Export and Quantize SmolVLM2 (INT4)
+optimum-cli export openvino --model HuggingFaceTB/SmolVLM2-256M-Instruct --weight-format int4 smol_ov_model/
+
+# Download pre-quantized Phi-3 OpenVINO IR
+huggingface-cli download OpenVINO/phi-3-mini-4k-instruct-int4-ov --local-dir phi3_ov_model/
