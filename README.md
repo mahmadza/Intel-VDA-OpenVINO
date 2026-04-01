@@ -78,12 +78,21 @@ Run the automated downloader to fetch the required Hugging Face models. *(Note: 
 python backend/download_models.py
 ```
 
-### 4\. Boot the Microservices
+### 4\. Boot the Microservices & App
 
-Because of the decoupled MCP architecture, this application requires **three** terminal windows.
+Because of the decoupled MCP architecture, this application requires **three** terminal windows. To easily capture the cross-platform database path, please start the frontend application first.
 
-**Terminal 1: Start the MCP Server (Generation Tools)**
+**Terminal 1: Start the Tauri Desktop App (Frontend)**
+This step initializes the local SQLite database for your specific operating system and prints its absolute path.
+```bash
+cd app
+npm install
+npm run tauri dev
+```
+*🛑 Pause and look at the terminal output. Copy the absolute path printed next to `🦀 Rust DB Path:` (e.g., `/Users/.../vda_intelligence.db` or `C:\Users\...`). You will need this for Terminal 3.*
 
+**Terminal 2: Start the MCP Server (Generation Tools)**
+Leave Terminal 1 running, open a new terminal tab, and start the isolated MCP tool server.
 ```bash
 conda activate vda_native
 cd backend
@@ -91,22 +100,17 @@ python agents/generation_mcp_server.py
 # Expected: "🚀 Starting Intel VDA Generation MCP Server on port 8000 (SSE)..."
 ```
 
-**Terminal 2: Start the AI Orchestrator (gRPC Backend)**
-
+**Terminal 3: Start the AI Orchestrator (gRPC Backend)**
+Open a final terminal tab to start the primary AI engine, passing in the database path you copied from Terminal 1.
 ```bash
 conda activate vda_native
 cd backend
-# Note: Ensure the absolute path is provided for the SQLite DB
-python server.py --db_path "$HOME/Library/Application Support/com.intel.vda/vda_intelligence.db"
+
+# Paste the path you copied from Terminal 1:
+python server.py --db_path "/paste/the/rust/db/path/here/vda_intelligence.db"
 # Expected: "🚀 gRPC Server running on 127.0.0.1:50051"
 ```
-
-**Terminal 3: Start the Tauri Desktop App**
-
-```bash
-cd app
-npm install
-npm run tauri dev
+*(💡 Note: Within 5 seconds of Terminal 3 starting, the frontend UI will automatically detect the AI Engine and switch its status indicator to "Ready" Green.)*
 ```
 
 -----
@@ -122,11 +126,19 @@ Once the UI is running, click **"+ New Video"** and select a short `.mp4` file. 
 
 -----
 
-## 📚 Project Documentation
+## 📚 Project Documentation (Start Here for Architecture Review)
 
-  * [Assessment Summary: Challenges, Constraints & Future Improvements](docs/ASSESSMENT_SUMMARY.md)
-  * [Full Architecture & Data Flow](docs/architecture/architecture.md)
-  * [Model Registry & OpenVINO Optimization](docs/models/models-registry.md)
+To understand the engineering decisions, trade-offs, and architecture of this application, please review the following documents:
+
+1. [Assessment Summary: Challenges, Constraints & Future Improvements](docs/ASSESSMENT_SUMMARY.md) *(Required reading per assessment rubric)*
+2. [Full Architecture & Data Flow](docs/architecture/architecture.md)
+3. [Model Registry & OpenVINO Optimization](docs/models/models-registry.md)
+
+### Architecture Decision Records (ADRs)
+* [ADR-001: VLM Model Selection (SmolVLM2 vs Moondream2)](docs/adr/001-vlm-model-selection.md)
+* [ADR-004: Data Persistence Strategy (SQLite with WAL Mode)](docs/adr/004-data-persistence-sqlite-wal.md)
+* [ADR-005: Agentic Orchestration and Semantic Routing](docs/adr/005-agentic-orchestration-intent-detection.md)
+* [ADR-007: Decoupled MCP Architecture via Server-Sent Events](docs/adr/007-mcp-sse-microservice.md)
 
 -----
 
