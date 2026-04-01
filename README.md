@@ -63,8 +63,9 @@ Create a dedicated native environment to ensure OpenVINO links correctly to your
 
 ```bash
 # Clone the repository and navigate to the root directory
-conda create -n vda_native python=3.10 -y
-conda activate vda_native
+conda create -n intel-VDA-env python=3.10 -y
+conda activate intel-VDA-env
+cd intel-VDA-OpenVINO
 
 # Install required ML and backend dependencies
 pip install -r backend/requirements.txt
@@ -94,7 +95,7 @@ npm run tauri dev
 **Terminal 2: Start the MCP Server (Generation Tools)**
 Leave Terminal 1 running, open a new terminal tab, and start the isolated MCP tool server.
 ```bash
-conda activate vda_native
+conda activate intel-VDA-env
 cd backend
 python agents/generation_mcp_server.py
 # Expected: "🚀 Starting Intel VDA Generation MCP Server on port 8000 (SSE)..."
@@ -103,21 +104,20 @@ python agents/generation_mcp_server.py
 **Terminal 3: Start the AI Orchestrator (gRPC Backend)**
 Open a final terminal tab to start the primary AI engine, passing in the database path you copied from Terminal 1.
 ```bash
-conda activate vda_native
+conda activate intel-VDA-env
 cd backend
 
 # Paste the path you copied from Terminal 1:
 python server.py --db_path "/paste/the/rust/db/path/here/vda_intelligence.db"
 # Expected: "🚀 gRPC Server running on 127.0.0.1:50051"
 ```
-*(💡 Note: Within 5 seconds of Terminal 3 starting, the frontend UI will automatically detect the AI Engine and switch its status indicator to "Ready" Green.)*
-```
+*(💡 Note: When the process in Terminal 3 finished after about 5 minutes, the frontend UI will automatically detect the AI Engine and switch its status indicator to "Ready" Green.)*
 
 -----
 
 ## 🧪 Testing the Capabilities
 
-Once the UI is running, click **"+ New Video"** and select a short `.mp4` file. Wait for the OpenVINO progress bar to reach 100%. Then, try these exact queries to test the specific rubric requirements:
+Once the UI is running, click **"+ New Video"** and select a short `.mp4` file (you can use the sample videos in `samples/` directory). Wait for the OpenVINO progress bar to reach 100%. Then, try these exact queries to test the specific rubric requirements:
 
 1.  **Test RAG & Cross-Modal Synthesis:** *"What objects are shown in the video, and what is being said?"*
 2.  **Test MCP Integration:** *"Summarize our discussion so far and generate a PDF."* (Watch Terminal 1 intercept the tool call).

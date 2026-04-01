@@ -309,7 +309,7 @@ function App() {
                     </div>
                     <div className="step">
                       <span className="step-num">3</span>
-                      <p>Ask the <strong>Forensic Analyst</strong> about specific events, objects, or audio content.</p>
+                      <p>Ask the <strong>Intel AI Analyst</strong> about specific events, objects, or audio content.</p>
                     </div>
                   </div>
                 </div>
