@@ -217,3 +217,16 @@ launcher/obj/
 # Python
 backend/temp/
 __pycache__/
+
+# .NET / C#
+**/bin/
+**/obj/
+
+# Python / ML
+backend/models/
+*.db
+*.db-wal
+*.db-shm
+
+# OS
+.DS_Store
