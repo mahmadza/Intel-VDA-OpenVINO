@@ -173,6 +173,7 @@ To understand the engineering decisions, trade-offs, and architecture of this ap
 * [ADR-002: Command Isolation in Tauri](docs/adr/002-command-isolation.md)
 * [ADR-003: Data Persistence (SQLite WAL)](docs/adr/003-data-persistence-sqlite-wal.md)
 * [ADR-004: Agentic Orchestration & Routing](docs/adr/004-agentic-orchestration-intent-detection.md)
+* [ADR-005: UI State Management & Hydration](docs/adr/005-ui-state-management-hydration.md)
 * [ADR-006: Decoupled MCP via SSE](docs/adr/006-mcp-sse-microservice.md)
 
 -----
