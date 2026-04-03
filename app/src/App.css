@@ -196,15 +196,58 @@ button {
   height: 100%;
   gap: 10px;
 }
-
 .messages-log {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
   background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* Space between each conversation turn */
+  overflow-y: auto;
+  min-height: 200px; /* Ensures the box doesn't collapse */
 }
+
+.message {
+  text-align: left; /* Force everything to the left */
+  background: transparent;
+  width: 100%;
+}
+
+.message strong {
+  display: inline;
+  margin-right: 8px;
+  color: #000;
+  font-weight: 700;
+  white-space: nowrap; /* Keeps 'You:' from breaking */
+}
+
+.message-content {
+  display: inline;
+}
+
+.message-content ul, 
+.message-content ol {
+  display: inline-block; /* Allows it to sit closer to the label */
+  vertical-align: top;
+  margin: 0 0 0 20px; /* Remove top/bottom margin entirely */
+  padding: 0;
+}
+
+.message-content li {
+  margin: 0; /* Remove space between bullets */
+  padding: 0;
+  line-height: 1.4;
+}
+/* This targets the first paragraph in the AI's response */
+.message-content p:first-child {
+  display: inline;
+  margin: 0;
+}
+
+/* Ensures there's no gap if the AI starts with a list */
+.message-content > *:first-child {
+  margin-top: 0 !important;
+}
+
 .input-group {
   display: flex;
   gap: 10px;

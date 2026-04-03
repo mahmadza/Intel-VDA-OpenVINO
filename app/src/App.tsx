@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { ask } from '@tauri-apps/plugin-dialog';
+import Markdown from 'react-markdown';
 import "./App.css";
 
 function App() {
@@ -238,13 +239,17 @@ function App() {
               <div className="messages-log">
                 {messages.map((m, i) => (
                   <div key={i} className={`message ${m.role}`}>
-                    <strong>{m.role === 'user' ? 'You' : 'Intel AI Analyst'}:</strong> {m.content}
+                    <strong>{m.role === 'user' ? 'You:' : 'Intel AI Analyst:'}</strong>
+                    <span className="message-content">
+                      <Markdown>{m.content}</Markdown>
+                    </span>
                   </div>
                 ))}
-
+                
                 {isChatting && (
                   <div className="message assistant thinking">
-                    <strong>Intel AI Analyst:</strong> <span className="typing-dots">Thinking...</span>
+                    <strong>Intel AI Analyst:</strong> 
+                    <span className="typing-dots">Thinking...</span>
                   </div>
                 )}
                 <div ref={chatEndRef} />
