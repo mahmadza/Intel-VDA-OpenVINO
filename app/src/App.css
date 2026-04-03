@@ -201,9 +201,16 @@ button {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 2px; /* Space between each conversation turn */
+  /* CHANGE: This is the key. It pushes all content to the bottom */
+  justify-content: flex-end; 
+  gap: 8px;
   overflow-y: auto;
-  min-height: 200px; /* Ensures the box doesn't collapse */
+  flex: 1; /* Ensure it takes up all available space */
+}
+
+/* Add this to ensure scrolling still works correctly when history gets long */
+.message:first-child {
+  margin-top: auto !important;
 }
 
 .message {

@@ -80,57 +80,68 @@ class QueryAgent:
             return f"System Error: MCP Server unreachable. Is the generation_mcp_server.py running? ({e})"
 
     def chat(self, video_id, user_query):
+        # 1. Fetch data from DB
         context = self._get_video_context(video_id)
-        chat_history = self._get_chat_history(video_id)
+        chat_history = self._get_chat_history(video_id, limit=5)
 
-        if len(context) < 10:
-            print("⚠️ WARNING: Context is virtually empty! Did the Vision/Audio agents extract data?")
-            context = "[NO VISUAL OR AUDIO DATA FOUND FOR THIS VIDEO]"
-
-        # Semantic Router (Intent Classification)
+        # 2. Enhanced Semantic Router with History
+        # We pass the history so the router knows if "it" refers to something previously discussed.
         router_prompt = f"""<|system|>
-        You are an AI router. Classify the user's query into ONE of these exact categories:
-        - GENERATE_PDF: User asked for a PDF report or summary document.
-        - GENERATE_PPT: User asked for a PowerPoint or PPT presentation.
-        - AMBIGUOUS: The request is extremely vague and completely lacks a subject (e.g., "what is that?", "tell me more about it").
-        - RAG_QUERY: User is asking about the video's objects, audio, what was spoken, or asking for a summary of the video/discussion.
+        You are an AI Video Analyst Router. Classify the user's CURRENT QUERY into one category.
         
-        Reply ONLY with the exact category name.
+        RECENT CONTEXT:
+        {chat_history}
+
+        CATEGORIES:
+        - GREETING: User is saying hi, hello, or being polite.
+        - GENERATE_REPORT: User explicitly wants to download/save a PDF or PPT file.
+        - RAG_QUERY: User asks about the video, "it", "this", or for a text summary.
+        - AMBIGUOUS: Only if the query is a pronoun like "it" and the RECENT CONTEXT is totally empty.
+
+        CURRENT QUERY: "{user_query}"
+        
+        Rules:
+        - If the query is "..." or "tell me more", it is a RAG_QUERY (follow-up).
+        - If the query is a greeting, it is a GREETING.
+        - If "it" refers to an object in RECENT CONTEXT, it is a RAG_QUERY.
+        
+        Reply with ONLY the category name.
         <|end|>
-        <|user|>
-        {user_query}<|end|>
         <|assistant|>"""
         
         intent = self.pipe.generate(router_prompt, max_new_tokens=10).strip().upper()
         print(f"🧭 Router classified intent as: {intent}")
 
-        # Agentic Execution
-        if "GENERATE_PDF" in intent:
+        # 3. Execution Logic
+        # Handle Greetings and standard Queries
+        if "GREETING" in intent or "RAG_QUERY" in intent:
+            # We use a combined prompt so the AI acts naturally
+            prompt = f"""<|system|>
+            You are the Intel AI Analyst. Use the ANALYSIS NOTES and RECENT CONTEXT to help the user.
+            - If it's a greeting, be professional and helpful.
+            - If they ask about the video, use the NOTES.
+            - If they use "it", refer to the last mentioned object in CONTEXT.
+
+            ANALYSIS NOTES (Video Data):
+            {context}
+            <|end|>
+            <|user|>
+            RECENT CONTEXT:
+            {chat_history}
+
+            CURRENT QUESTION: {user_query}<|end|>
+            <|assistant|>
+            """
+            response = self.pipe.generate(prompt, max_new_tokens=250).strip()
+            # Clean up the output to only get the AI's actual words
+            return response.split("Assistant:")[-1].strip()
+
+        # Handle Report Generation
+        elif "GENERATE_REPORT" in intent:
             report_text = f"ANALYSIS:\n{context}\n\nCHAT HISTORY:\n{chat_history}"
+            if "PPT" in user_query.upper():
+                return asyncio.run(self._call_mcp_tool("generate_ppt_report", {"transcript": context, "chat_history": chat_history}))
             return asyncio.run(self._call_mcp_tool("generate_pdf_report", {"content": report_text}))
 
-        elif "GENERATE_PPT" in intent:
-            return asyncio.run(self._call_mcp_tool("generate_ppt_report", {"transcript": context, "chat_history": chat_history}))
-
-        elif "AMBIGUOUS" in intent:
-            return "I'm not exactly sure what you're referring to. Could you provide a bit more detail about what you're looking for?"
-
-        # Fallback to Standard RAG
-        prompt = f"""<|system|>
-        You are an AI Video Analyst. Answer the user's question using ONLY the provided ANALYSIS NOTES. 
-        The notes contain the audio TRANSCRIPT and VISUAL OBSERVATIONS from the video.
-        If the user asks about objects, list what you see in the visual observations.
-        If the user asks about audio or dialogue, summarize the transcript.
-
-        ANALYSIS NOTES:
-        {context}
-        <|end|>
-        <|user|>
-        Previous chat for context:
-        {chat_history}
-        
-        Current question: {user_query}<|end|>
-        <|assistant|>
-        """
-        response = self.pipe.generate(prompt, max_new_tokens=200).strip()
-        return response.split("Assistant:")[-1].strip()
+        # Fallback for truly Ambiguous stuff
+        return "I'm not exactly sure what you're referring to. Could you provide a bit more detail about what you're looking for?"
