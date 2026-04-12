@@ -1,8 +1,8 @@
-# 🚀 Intel VDA: Local Video Intelligence Orchestrator
+# 🚀 VDA: Local Video Intelligence Orchestrator
 
-**Intel VDA** is a high-performance, privacy-centric desktop application that transforms raw video data into queryable structured intelligence. 
+**VDA** is a high-performance, privacy-centric desktop application that transforms raw video data into queryable structured intelligence.
 
-Built for the **Intel GenAI Software Solutions** assessment, it demonstrates a robust multi-agent architecture optimized for local hardware via **OpenVINO**, featuring a dedicated **Model Context Protocol (MCP)** server for artifact generation and an intelligent semantic routing engine.
+Built as a personal project to explore local agentic AI on consumer hardware, it demonstrates a robust multi-agent architecture optimized via the **Intel OpenVINO** framework, featuring a dedicated **Model Context Protocol (MCP)** server for artifact generation and an intelligent semantic routing engine.
 
 ---
 
